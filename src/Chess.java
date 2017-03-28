@@ -15,7 +15,7 @@ public class Chess {
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'p', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'p', ' ', ' ', ' ', ' ', ' ', ' ', 'p'},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
@@ -53,16 +53,14 @@ public class Chess {
     // Process a players move that he inputs
     private static void getPlayerOneInput() {
 
-        
         // make a backup copy of the old position, so that if the new move appears to put king in 
         // check we can revert back to original position
         char[][] oldBoard = board;
         boolean movedSuccessfully = false;
 
-        while(!movedSuccessfully) {
+        while (!movedSuccessfully) {
             System.out.print("White enter your move: ");
             String move = reader.next();
-            
 
             if (move.equalsIgnoreCase("quit")) {
                 quit = true;
@@ -87,15 +85,15 @@ public class Chess {
                         board[4][j] = 'P';
                         movedSuccessfully = true;
                     } // capture a black piece by a pawn to the left (make sure its the only pawn that can
-                    // make that capture)
-                    else if ("pnbrqk".contains(String.valueOf(board[i][j]))
+                    // make that capture) and make sure not to go out of bounds of the board array
+                    else if ("pnbrqk".contains(String.valueOf(board[i][j])) && j != 7
                             && ((j == 0 && board[i + 1][j + 1] == 'P') || (board[i + 1][j + 1] == 'P' && board[i + 1][j - 1] != 'P'))) {
                         board[i + 1][j + 1] = ' ';
                         board[i][j] = 'P';
                         movedSuccessfully = true;
                     } // capture a black piece by a pawn to the right (make sure part same as last block)
-                    else if ("pnbrqk".contains(String.valueOf(board[i][j]))
-                            && board[i + 1][j - 1] == 'P' && board[i + 1][j + 1] != 'P') {
+                    else if ("pnbrqk".contains(String.valueOf(board[i][j])) && j != 0
+                            && ((j == 7 && board[i + 1][j - 1] == 'P') || (board[i + 1][j - 1] == 'P' && board[i + 1][j + 1] != 'P'))) {
                         board[i + 1][j - 1] = ' ';
                         board[i][j] = 'P';
                         movedSuccessfully = true;
