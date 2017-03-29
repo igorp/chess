@@ -15,7 +15,7 @@ public class Chess {
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'p', ' ', ' ', ' ', ' ', ' ', ' ', 'p'},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
@@ -37,9 +37,11 @@ public class Chess {
             for (int j = 0; j < 8; j++) {
                 if (board[i][j] != ' ') {
                     System.out.print(board[i][j] + " ");
-                } else if ((i + j) % 2 == 1) {
+                }
+                else if ((i + j) % 2 == 1) {
                     System.out.print("- ");
-                } else {
+                }
+                else {
                     System.out.print("  ");
                 }
             }
@@ -79,26 +81,32 @@ public class Chess {
                         board[i + 1][j] = ' ';
                         board[i][j] = 'P';
                         movedSuccessfully = true;
-                    } // two moves forward from starting position by a pawn
+                    }
+                    // two moves forward from starting position by a pawn
                     else if (i == 4 && board[i][j] == ' ' && board[5][j] == ' ' && board[6][j] == 'P') {
                         board[6][j] = ' ';
                         board[4][j] = 'P';
                         movedSuccessfully = true;
-                    } // capture a black piece by a pawn to the left (make sure its the only pawn that can
-                    // make that capture) and make sure not to go out of bounds of the board array
+                    }
+                    // capture a black piece by a pawn to the left (make sure its the only pawn that can
+                    // make that capture and make sure not to go out of bounds of the board array)
                     else if ("pnbrqk".contains(String.valueOf(board[i][j])) && j != 7
-                            && ((j == 0 && board[i + 1][j + 1] == 'P') || (board[i + 1][j + 1] == 'P' && board[i + 1][j - 1] != 'P'))) {
+                            && ((j == 0 && board[i + 1][j + 1] == 'P') || (board[i + 1][j + 1] == 'P'
+                            && board[i + 1][j - 1] != 'P'))) {
                         board[i + 1][j + 1] = ' ';
                         board[i][j] = 'P';
                         movedSuccessfully = true;
-                    } // capture a black piece by a pawn to the right (make sure part same as last block)
+                    }
+                    // capture a black piece by a pawn to the right (make sure part same as last block)
                     else if ("pnbrqk".contains(String.valueOf(board[i][j])) && j != 0
-                            && ((j == 7 && board[i + 1][j - 1] == 'P') || (board[i + 1][j - 1] == 'P' && board[i + 1][j + 1] != 'P'))) {
+                            && ((j == 7 && board[i + 1][j - 1] == 'P') || (board[i + 1][j - 1] == 'P'
+                            && board[i + 1][j + 1] != 'P'))) {
                         board[i + 1][j - 1] = ' ';
                         board[i][j] = 'P';
                         movedSuccessfully = true;
                     }
                 }
+
                 // a specified pawn capture, if there are two possible options
                 if (move.length() == 3 && "abcdefgh".contains(String.valueOf(move.charAt(0)))) {
                     // convert chess notation to array location numbers
@@ -106,12 +114,96 @@ public class Chess {
                     int i = 8 - Character.getNumericValue(move.charAt(2));
                     int j = (int) move.charAt(1) - 97;
 
+                    // the two files must be next to each other and target can't be on the side borders
                     if (Math.abs(current_file - j) == 1
                             && "pnbrqk".contains(String.valueOf(board[i][j]))
+                            && j != 7 && j != 0
                             && board[i + 1][j - 1] == 'P' && board[i + 1][j + 1] == 'P') {
                         board[i + 1][current_file] = ' ';
                         board[i][j] = 'P';
                         movedSuccessfully = true;
+                    }
+                }
+
+                // rook move or capture
+                if (move.length() == 3 && move.charAt(0) == 'r') {
+                    System.out.println("rook move");
+                    int i = 8 - Character.getNumericValue(move.charAt(2));
+                    int j = (int) move.charAt(1) - 97;
+
+                    // Candidate rook moves, assign first possible move to these. If then we find
+                    // other rooks that can also make move, we change firstRookMove to false and
+                    // don't move anything. If we then find more possible moves we change  
+                    // canMoveRook to false and don't make rook moves. If we don't find other rook 
+                    // moves, we use the candidate moves to make the move in the end.
+                    int cr_i = -1;
+                    int cr_j = -1;
+                    boolean firstRookMove = true;
+                    boolean canMoveRook = true;
+
+                    // make sure that target square is not own piece
+                    if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+                        // first find the rook(s)
+                        for (int x = 0; x < 8; x++) {
+                            for (int y = 0; y < 8; y++) {
+                                if (board[x][y] == 'R') {
+
+                                    int r_i = x;
+                                    int r_j = y;
+                                    // rook and selected square have to be on the same horizontal or 
+                                    // vertical line, but not exactly the same square
+                                    if ((i == r_i || j == r_j) && !(i == r_i && j == r_j)) {
+
+                                        boolean pathObstructed = false;
+                                        // rook and target square are on the same rank
+                                        if (i == r_i) {
+                                            int min = Math.min(j, r_j);
+                                            int max = Math.max(j, r_j);
+                                            // check squares between path
+                                            for (int k = min + 1; k < max; k++) {
+                                                if (board[i][k] != ' ') {
+                                                    pathObstructed = true;
+                                                }
+                                            }
+                                        }
+                                        // rook and target square are on the same file
+                                        if (j == r_j) {                                            
+                                            int min = Math.min(i, r_i);
+                                            int max = Math.max(i, r_i);
+
+                                            // check squares between path
+                                            for (int k = min + 1; k < max; k++) {
+                                                if (board[k][j] != ' ') {
+                                                    pathObstructed = true;
+                                                }
+                                            }
+                                        }
+                                        // if nothing in the way and ...
+                                        if (!pathObstructed) {
+                                            // this is first found move, then save it and mark it
+                                            if (firstRookMove) {
+                                                cr_i = r_i;
+                                                cr_j = r_j;
+                                                firstRookMove = false;
+
+                                            }
+                                            // not first found move, then change flag so that no
+                                            // rook moves are made anymore
+                                            else {
+                                                canMoveRook = false;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Now we have gone through the all the rooks and know if move is unique.
+                        if (canMoveRook && cr_i != -1 && cr_j != -1) {
+                            board[cr_i][cr_j] = ' ';
+                            board[i][j] = 'R';
+                            movedSuccessfully = true;
+                        }
                     }
                 }
             }
