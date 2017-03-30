@@ -13,12 +13,15 @@ public class Chess {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', 'R', ' ', ' ', ' ', 'R', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
+
+    static int[][] knightMoves
+            = {{-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {-2, -1}, {-2, 1}, {2, -1}, {2, 1}};
 
     public static void main(String args[]) {
         System.out.println("Two-player chess game by Igor P.\n");
@@ -189,6 +192,7 @@ public class Chess {
                                             // not first found move, then change flag so that no
                                             // rook moves are made anymore
                                             else {
+                                                System.out.println("More than one rook can make that move.");
                                                 canMoveRook = false;
                                             }
                                         }
@@ -206,7 +210,7 @@ public class Chess {
                     }
                 }
 
-                // ambiguous rook move or capture
+                // Ambiguous rook move or capture.
                 if (move.length() == 4 && move.charAt(0) == 'r') {
                     boolean firstRookMove = true;
                     boolean canMoveRook = true;
@@ -291,11 +295,51 @@ public class Chess {
                         }
                     }
                 }
+
+                // Unambiguous knight move or capture.
+                if (move.length() == 3 && move.charAt(0) == 'n') {
+                    boolean firstKnightMove = true;
+                    boolean canMoveKnight = true;
+
+                    int i = 8 - Character.getNumericValue(move.charAt(2));
+                    int j = (int) move.charAt(1) - 97;
+                    // candidate knight position
+                    int cn_i = -1;
+                    int cn_j = -1;
+
+
+                    // make sure target square isn't occupied by own piece
+                    if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+                        // go through possible squares from where knight could move to square
+                        for (int m = 0; m < 8; m++) {
+                            int n_i = i + knightMoves[m][0];
+                            int n_j = j + knightMoves[m][1];
+                            if (n_i >= 0 && n_i < 8 && n_j >= 0 && n_j < 8) {
+                                if (board[n_i][n_j] == 'N') {
+                                    if (firstKnightMove) {
+                                        cn_i = n_i;
+                                        cn_j = n_j;
+                                        firstKnightMove = false;
+                                    }
+                                    else {
+                                        System.out.println("More than one knight can make that move.");
+                                        canMoveKnight = false;
+                                    }
+                                }
+                            }
+                        }
+                        if (canMoveKnight && cn_i != -1 && cn_j != -1) {
+                            board[cn_i][cn_j] = ' ';
+                            board[i][j] = 'N';
+                            movedSuccessfully = true;
+                        }
+                    }
+                }
             }
         }
     }
+    
     // Takes string as an argument and returns a boolean depending if it is correct syntax
-
     static boolean validSyntax(String m) {
 
         // valid pawn move if has two characters, first is file and second rank eg. "e4"
@@ -312,7 +356,7 @@ public class Chess {
                 && "12345678".contains(String.valueOf(m.charAt(2)))) {
             return true;
         }
-        // valid piece move if 3 letters, first piece syrxmbol 2nd destination square: "nf3"
+        // valid piece move if 3 letters, first piece symbol 2nd destination square: "nf3"
         if (m.length() == 3
                 && "nbrqk".contains(String.valueOf(m.charAt(0)))
                 && "abcdefgh".contains(String.valueOf(m.charAt(1)))
