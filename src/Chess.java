@@ -13,7 +13,7 @@ public class Chess {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'R', ' ', ' ', ' ', 'R', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
@@ -125,9 +125,8 @@ public class Chess {
                     }
                 }
 
-                // rook move or capture
+                // unambiguous rook move or capture
                 if (move.length() == 3 && move.charAt(0) == 'r') {
-                    System.out.println("rook move");
                     int i = 8 - Character.getNumericValue(move.charAt(2));
                     int j = (int) move.charAt(1) - 97;
 
@@ -167,7 +166,7 @@ public class Chess {
                                             }
                                         }
                                         // rook and target square are on the same file
-                                        if (j == r_j) {                                            
+                                        if (j == r_j) {
                                             int min = Math.min(i, r_i);
                                             int max = Math.max(i, r_i);
 
@@ -206,11 +205,97 @@ public class Chess {
                         }
                     }
                 }
+
+                // ambiguous rook move or capture
+                if (move.length() == 4 && move.charAt(0) == 'r') {
+                    boolean firstRookMove = true;
+                    boolean canMoveRook = true;
+
+                    int i = 8 - Character.getNumericValue(move.charAt(3));
+                    int j = (int) move.charAt(2) - 97;
+
+                    int cr_i = -1;
+                    int cr_j = -1;
+
+                    // specifier tells which rook to move, either rank or file
+                    int s_i = -1;
+                    int s_j = -1;
+
+                    if ("abcdefgh".contains(String.valueOf(move.charAt(1)))) {
+                        s_j = (int) move.charAt(1) - 97;
+                    }
+                    else {
+                        s_i = 8 - Character.getNumericValue(move.charAt(1));
+                    }
+
+                    if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+                        for (int x = 0; x < 8; x++) {
+                            for (int y = 0; y < 8; y++) {
+                                if (board[x][y] == 'R') {
+                                    int r_i = x;
+                                    int r_j = y;
+
+                                    if ((i == r_i || j == r_j) && !(i == r_i && j == r_j)) {
+
+                                        boolean pathObstructed = false;
+                                        // rook and target square are on the same rank
+                                        if (i == r_i) {
+                                            int min = Math.min(j, r_j);
+                                            int max = Math.max(j, r_j);
+                                            // check squares between path
+                                            for (int k = min + 1; k < max; k++) {
+                                                if (board[i][k] != ' ') {
+                                                    pathObstructed = true;
+                                                }
+                                            }
+                                        }
+                                        // rook and target square are on the same file
+                                        if (j == r_j) {
+                                            int min = Math.min(i, r_i);
+                                            int max = Math.max(i, r_i);
+
+                                            // check squares between path
+                                            for (int k = min + 1; k < max; k++) {
+                                                if (board[k][j] != ' ') {
+                                                    pathObstructed = true;
+                                                }
+                                            }
+                                        }
+                                        // if nothing in the way and specifier matches, make it
+                                        // a candidate move
+                                        if (!pathObstructed) {
+                                            if (s_i == r_i || s_j == r_j) {
+                                                // if it is first found move, then mark it
+                                                if (firstRookMove) {
+                                                    cr_i = r_i;
+                                                    cr_j = r_j;
+                                                    firstRookMove = false;
+
+                                                }
+                                                // not first found move, then change flag so that no
+                                                // rook moves are made anymore
+                                                else {
+                                                    canMoveRook = false;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // Now we have gone through the all the rooks and know if move is unique.
+                        if (canMoveRook && cr_i != -1 && cr_j != -1) {
+                            board[cr_i][cr_j] = ' ';
+                            board[i][j] = 'R';
+                            movedSuccessfully = true;
+                        }
+                    }
+                }
             }
         }
     }
-
     // Takes string as an argument and returns a boolean depending if it is correct syntax
+
     static boolean validSyntax(String m) {
 
         // valid pawn move if has two characters, first is file and second rank eg. "e4"
