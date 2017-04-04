@@ -13,16 +13,18 @@ public class ChessTest {
     }
 }
 
-enum Turn {
-    WHITE, BLACK
-}
-
 class Chess {
+
+    static final int WHITE = 0;
+    static final int BLACK = 1;
 
     Scanner reader = new Scanner(System.in);
     // these two array to tell if a certain pawn has just moved two squares, used for en passant
     boolean[] whitePawnTwoSquares = new boolean[8];
     boolean[] blackPawnTwoSquares = new boolean[8];
+    // Conditions which determine if a king can castle. First array for white, second for black.
+    // First boolean tells if can castle queenside, second boolean tells if can castle kingside.
+    boolean[][] canCastle = {{true, true}, {true, true}};
     boolean quit;
 
     private char[][] board = {
@@ -53,27 +55,23 @@ class Chess {
     private int[][] rookDirection = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
     private int[][] bishopDirection = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
     private int[][] everyDirection = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {0, 1}, {1, 0}, {-1, 0}, {0, -1}};
-    Turn turn = Turn.WHITE;
+    int turn = WHITE;
 
     public void play() {
         System.out.println("Two-player chess game by Igor P.\n");
         while (!quit) {
 
-            turn = Turn.WHITE;
+            turn = WHITE;
             drawBoard();
             getPlayerInput();
+            System.out.println(Arrays.toString(canCastle[0]));
             if (quit) {
                 break;
             }
-
-            System.out.println(Arrays.toString(whitePawnTwoSquares));
-
-            turn = Turn.BLACK;
+            turn = BLACK;
             drawBoard();
             getPlayerInput();
-
-            System.out.println(Arrays.toString(blackPawnTwoSquares));
-
+            System.out.println(Arrays.toString(canCastle[1]));
         }
     }
 
@@ -110,7 +108,7 @@ class Chess {
         boolean movedSuccessfully = false;
         boolean[] enPassant = blackPawnTwoSquares;
         String player = "White";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             player = "Black";
             enPassant = whitePawnTwoSquares;
         }
@@ -183,7 +181,7 @@ class Chess {
         boolean[] enPassantOwn = whitePawnTwoSquares;
         boolean[] enPassantOpponent = blackPawnTwoSquares;
         String opponentPieces = "pnbrqk";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             pawn = 'p';
             dir = -1;
             twoMoves = 3;
@@ -255,7 +253,7 @@ class Chess {
         int dir = 1;
         boolean[] enPassantOpponent = blackPawnTwoSquares;
         String opponentPieces = "pnbrqk";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             pawn = 'p';
             dir = -1;
             enPassantOpponent = whitePawnTwoSquares;
@@ -303,7 +301,7 @@ class Chess {
         // variables for both white and black
         char rook = 'R';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             rook = 'r';
             opponentPieces = "pnbrqk";
         }
@@ -370,6 +368,8 @@ class Chess {
             if (canMoveRook && cr_i != -1 && cr_j != -1) {
                 board[cr_i][cr_j] = ' ';
                 board[i][j] = rook;
+
+                updateRookCastlingFlags(cr_i, cr_j);
                 return true;
             }
         }
@@ -392,7 +392,7 @@ class Chess {
 
         char rook = 'R';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             rook = 'r';
             opponentPieces = "pnbrqk";
         }
@@ -463,6 +463,8 @@ class Chess {
             if (canMoveRook && cr_i != -1 && cr_j != -1) {
                 board[cr_i][cr_j] = ' ';
                 board[i][j] = rook;
+
+                updateRookCastlingFlags(cr_i, cr_j);
                 return true;
             }
         }
@@ -481,7 +483,7 @@ class Chess {
 
         char knight = 'N';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             knight = 'n';
             opponentPieces = "pnbrqk";
         }
@@ -532,7 +534,7 @@ class Chess {
         // variables for both white and black
         char knight = 'N';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             knight = 'n';
             opponentPieces = "pnbrqk";
         }
@@ -586,7 +588,7 @@ class Chess {
         // variables for both white and black
         char bishop = 'B';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             bishop = 'b';
             opponentPieces = "pnbrqk";
         }
@@ -653,7 +655,7 @@ class Chess {
         // variables for both white and black
         char bishop = 'B';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             bishop = 'b';
             opponentPieces = "pnbrqk";
         }
@@ -724,7 +726,7 @@ class Chess {
         // variables for both white and black
         char queen = 'Q';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             queen = 'q';
             opponentPieces = "pnbrqk";
         }
@@ -791,7 +793,7 @@ class Chess {
         // variables for both white and black
         char queen = 'Q';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             queen = 'q';
             opponentPieces = "pnbrqk";
         }
@@ -856,7 +858,7 @@ class Chess {
         // variables for both white and black
         char king = 'K';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             king = 'k';
             opponentPieces = "pnbrqk";
         }
@@ -876,6 +878,9 @@ class Chess {
                                 if (path_i == i && path_j == j && !underControl(path_i, path_j)) {
                                     board[k_i][k_j] = ' ';
                                     board[i][j] = king;
+
+                                    // update castling rights
+                                    updateKingCastlingFlags(k_i, k_j);
                                     return true;
                                 }
                             }
@@ -898,7 +903,7 @@ class Chess {
         char rook = 'r';
         char queen = 'q';
         char king = 'k';
-        if (turn == Turn.BLACK) {
+        if (turn == BLACK) {
             dir = -1;
             pawn = 'P';
             knight = 'N';
@@ -1001,6 +1006,38 @@ class Chess {
             }
         }
         return false;
+    }
+
+    // updates the canCastle array depending on which rook has moved from it's starting square
+    private void updateRookCastlingFlags(int i, int j) {
+        // rook's rank is 1st or eight, depending who's turn it is
+        int r = 7;
+        if (turn == BLACK) {
+            r = 0;
+        }
+
+        // queenside rook has moved
+        if (canCastle[turn][0] && i == r && j == 0) {
+            canCastle[turn][0] = false;
+        }
+        // kingside rook has moved
+        if (canCastle[turn][1] && i == r && j == 7) {
+            canCastle[turn][1] = false;
+        }
+    }
+
+    // updates the canCastle array if king moves from his starting square
+    private void updateKingCastlingFlags(int i, int j) {
+        int r = 7;
+        if (turn == BLACK) {
+            r = 0;
+        }
+
+        // if king king has moved, both sides castle is prohibited
+        if (i == r && j == 4) {
+            canCastle[turn][0] = false;
+            canCastle[turn][1] = false;
+        }
     }
 
     // Takes string as an argument and returns a boolean depending if it is correct syntax
