@@ -13,30 +13,59 @@ public class ChessTest {
     }
 }
 
+enum Turn {
+    WHITE, BLACK
+}
+
 class Chess {
 
     Scanner reader = new Scanner(System.in);
     boolean quit;
+    boolean[] enPassantBlack = new boolean[8];
 
     private char[][] board = {
-        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+        {'r', 'n', 'b', 'q', ' ', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'k', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
-    private int[][] knightMoves
+    private char[][] board2 = {
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'p', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'p', 'K', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+    };
+
+    private int[][] knightMove
             = {{-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {-2, -1}, {-2, 1}, {2, -1}, {2, 1}};
+
+    private int[][] rookDirection = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    private int[][] bishopDirection = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+    private int[][] everyDirection = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+    Turn turn = Turn.WHITE;
 
     public void play() {
         System.out.println("Two-player chess game by Igor P.\n");
         while (!quit) {
+
+            turn = Turn.WHITE;
             drawBoard();
-            getPlayerOneInput();
+            getPlayerInput();
+            if (quit) {
+                break;
+            }
+            turn = Turn.BLACK;
+            drawBoard();
+            getPlayerInput();
         }
     }
 
@@ -65,15 +94,19 @@ class Chess {
     }
 
     // Process a players move that he inputs
-    private void getPlayerOneInput() {
+    private void getPlayerInput() {
 
         // make a backup copy of the old position, so that if the new move appears to put king in 
         // check we can revert back to original position
-        char[][] oldBoard = board;
+        //       char[][] oldBoard = board;
         boolean movedSuccessfully = false;
 
         while (!movedSuccessfully) {
-            System.out.print("White enter your move: ");
+            String player = "White";
+            if (turn == Turn.BLACK) {
+                player = "Black";
+            }
+            System.out.print(player + " enter your move: ");
             String move = reader.next();
 
             if (move.equalsIgnoreCase("quit")) {
@@ -115,6 +148,9 @@ class Chess {
                 if (move.length() == 4 && move.charAt(0) == 'q') {
                     movedSuccessfully = ambiguousQueenMove(move);
                 }
+                if (move.length() == 3 && move.charAt(0) == 'k') {
+                    movedSuccessfully = kingMove(move);
+                }
             }
         }
     }
@@ -124,33 +160,45 @@ class Chess {
         int i = 8 - Character.getNumericValue(move.charAt(1));
         int j = (int) move.charAt(0) - 97;
 
+        // variables for both white and black
+        char pawn = 'P';
+        int dir = 1;
+        int twoMoves = 4;
+        String opponentPieces = "pnbrqk";
+        if (turn == Turn.BLACK) {
+            pawn = 'p';
+            dir = -1;
+            twoMoves = 3;
+            opponentPieces = "PNBRQK";
+        }
+
         // one move forward by a pawn
-        if (board[i][j] == ' ' && board[i + 1][j] == 'P') {
-            board[i + 1][j] = ' ';
-            board[i][j] = 'P';
+        if (board[i][j] == ' ' && board[i + dir][j] == pawn) {
+            board[i + dir][j] = ' ';
+            board[i][j] = pawn;
             return true;
         }
         // two moves forward from starting position by a pawn
-        else if (i == 4 && board[i][j] == ' ' && board[5][j] == ' ' && board[6][j] == 'P') {
-            board[6][j] = ' ';
-            board[4][j] = 'P';
+        else if (i == twoMoves && board[i][j] == ' ' && board[i + dir][j] == ' ' && board[i + 2 * dir][j] == pawn) {
+            board[i + 2 * dir][j] = ' ';
+            board[i][j] = pawn;
             return true;
         }
-        // capture a black piece by a pawn to the left (make sure its the only pawn that can
+        // capture a piece by a pawn to the left (make sure its the only pawn that can
         // make that capture and make sure not to go out of bounds of the board array)
-        else if ("pnbrqk".contains(String.valueOf(board[i][j])) && j != 7
-                && ((j == 0 && board[i + 1][j + 1] == 'P') || (board[i + 1][j + 1] == 'P'
-                && board[i + 1][j - 1] != 'P'))) {
-            board[i + 1][j + 1] = ' ';
-            board[i][j] = 'P';
+        else if (opponentPieces.contains(String.valueOf(board[i][j])) && j != 7
+                && ((j == 0 && board[i + dir][j + 1] == pawn) || (board[i + dir][j + 1] == pawn
+                && board[i + dir][j - 1] != pawn))) {
+            board[i + dir][j + 1] = ' ';
+            board[i][j] = pawn;
             return true;
         }
-        // capture a black piece by a pawn to the right (make sure part same as last block)
-        else if ("pnbrqk".contains(String.valueOf(board[i][j])) && j != 0
-                && ((j == 7 && board[i + 1][j - 1] == 'P') || (board[i + 1][j - 1] == 'P'
-                && board[i + 1][j + 1] != 'P'))) {
-            board[i + 1][j - 1] = ' ';
-            board[i][j] = 'P';
+        // capture a piece by a pawn to the right (make sure part same as last block)
+        else if (opponentPieces.contains(String.valueOf(board[i][j])) && j != 0
+                && ((j == 7 && board[i + dir][j - 1] == pawn) || (board[i + dir][j - 1] == pawn
+                && board[i + dir][j + 1] != pawn))) {
+            board[i + dir][j - 1] = ' ';
+            board[i][j] = pawn;
             return true;
         }
         return false;
@@ -162,13 +210,23 @@ class Chess {
         int i = 8 - Character.getNumericValue(move.charAt(2));
         int j = (int) move.charAt(1) - 97;
 
+        // variables for both white and black
+        char pawn = 'P';
+        int dir = 1;
+        String opponentPieces = "pnbrqk";
+        if (turn == Turn.BLACK) {
+            pawn = 'p';
+            dir = -1;
+            opponentPieces = "PNBRQK";
+        }
+
         // the two files must be next to each other and target can't be on the side borders
         if (Math.abs(current_file - j) == 1
-                && "pnbrqk".contains(String.valueOf(board[i][j]))
+                && opponentPieces.contains(String.valueOf(board[i][j]))
                 && j != 7 && j != 0
-                && board[i + 1][j - 1] == 'P' && board[i + 1][j + 1] == 'P') {
-            board[i + 1][current_file] = ' ';
-            board[i][j] = 'P';
+                && board[i + dir][j - 1] == pawn && board[i + dir][j + 1] == pawn) {
+            board[i + dir][current_file] = ' ';
+            board[i][j] = pawn;
             return true;
         }
         return false;
@@ -187,13 +245,21 @@ class Chess {
         int cr_j = -1;
         boolean firstRookMove = true;
         boolean canMoveRook = true;
+        
+        // variables for both white and black
+        char rook = 'R';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            rook = 'r';
+            opponentPieces = "pnbrqk";
+        }
 
         // make sure that target square is not own piece
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             // first find the rook(s)
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
-                    if (board[x][y] == 'R') {
+                    if (board[x][y] == rook) {
 
                         int r_i = x;
                         int r_j = y;
@@ -249,7 +315,7 @@ class Chess {
             // Now we have gone through the all the rooks and know if move is unique.
             if (canMoveRook && cr_i != -1 && cr_j != -1) {
                 board[cr_i][cr_j] = ' ';
-                board[i][j] = 'R';
+                board[i][j] = rook;
                 return true;
             }
         }
@@ -269,6 +335,13 @@ class Chess {
         // specifier tells which rook to move, either rank or file
         int s_i = -1;
         int s_j = -1;
+        
+        char rook = 'R';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            rook = 'r';
+            opponentPieces = "pnbrqk";
+        }
 
         if ("abcdefgh".contains(String.valueOf(move.charAt(1)))) {
             s_j = (int) move.charAt(1) - 97;
@@ -277,10 +350,10 @@ class Chess {
             s_i = 8 - Character.getNumericValue(move.charAt(1));
         }
 
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
-                    if (board[x][y] == 'R') {
+                    if (board[x][y] == rook) {
                         int r_i = x;
                         int r_j = y;
 
@@ -335,7 +408,7 @@ class Chess {
             // Now we have gone through the all the rooks and know if move is unique.
             if (canMoveRook && cr_i != -1 && cr_j != -1) {
                 board[cr_i][cr_j] = ' ';
-                board[i][j] = 'R';
+                board[i][j] = rook;
                 return true;
             }
         }
@@ -351,15 +424,22 @@ class Chess {
         // candidate knight position
         int cn_i = -1;
         int cn_j = -1;
+        
+        char knight = 'N';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            knight = 'n';
+            opponentPieces = "pnbrqk";
+        }
 
         // make sure target square isn't occupied by own piece
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             // go through possible squares from where knight could move to square
             for (int m = 0; m < 8; m++) {
-                int n_i = i + knightMoves[m][0];
-                int n_j = j + knightMoves[m][1];
+                int n_i = i + knightMove[m][0];
+                int n_j = j + knightMove[m][1];
                 if (n_i >= 0 && n_i < 8 && n_j >= 0 && n_j < 8) {
-                    if (board[n_i][n_j] == 'N') {
+                    if (board[n_i][n_j] == knight) {
                         if (firstKnightMove) {
                             cn_i = n_i;
                             cn_j = n_j;
@@ -374,7 +454,7 @@ class Chess {
             }
             if (canMoveKnight && cn_i != -1 && cn_j != -1) {
                 board[cn_i][cn_j] = ' ';
-                board[i][j] = 'N';
+                board[i][j] = knight;
                 return true;
             }
 
@@ -394,6 +474,14 @@ class Chess {
         // specifier tells which knight to move, either rank or file
         int s_i = -1;
         int s_j = -1;
+        
+        // variables for both white and black
+        char knight = 'N';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            knight = 'n';
+            opponentPieces = "pnbrqk";
+        }
 
         if ("abcdefgh".contains(String.valueOf(move.charAt(1)))) {
             s_j = (int) move.charAt(1) - 97;
@@ -402,13 +490,13 @@ class Chess {
             s_i = 8 - Character.getNumericValue(move.charAt(1));
         }
         // make sure target square isn't occupied by own piece
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             // go through possible squares from where knight could move to square
             for (int m = 0; m < 8; m++) {
-                int n_i = i + knightMoves[m][0];
-                int n_j = j + knightMoves[m][1];
+                int n_i = i + knightMove[m][0];
+                int n_j = j + knightMove[m][1];
                 if (n_i >= 0 && n_i < 8 && n_j >= 0 && n_j < 8) {
-                    if (board[n_i][n_j] == 'N') {
+                    if (board[n_i][n_j] == knight) {
                         if (s_i == n_i || s_j == n_j) {
                             if (firstKnightMove) {
                                 cn_i = n_i;
@@ -424,7 +512,7 @@ class Chess {
             }
             if (canMoveKnight && cn_i != -1 && cn_j != -1) {
                 board[cn_i][cn_j] = ' ';
-                board[i][j] = 'N';
+                board[i][j] = knight;
                 return true;
             }
         }
@@ -440,20 +528,27 @@ class Chess {
         // candidate bishop position
         int c_i = -1;
         int c_j = -1;
+        
+        // variables for both white and black
+        char bishop = 'B';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            bishop = 'b';
+            opponentPieces = "pnbrqk";
+        }
 
         // make sure target square isn't occupied by own piece
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
-                    if (board[x][y] == 'B') {
+                    if (board[x][y] == bishop) {
                         int b_i = x;
                         int b_j = y;
-                        int[][] d = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
 
                         // go in all four directions
                         for (int f = 0; f < 4; f++) {
-                            int path_i = x + d[f][0];
-                            int path_j = y + d[f][1];
+                            int path_i = x + bishopDirection[f][0];
+                            int path_j = y + bishopDirection[f][1];
 
                             while (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
                                 if (path_i == i && path_j == j) {
@@ -471,8 +566,8 @@ class Chess {
                                 if (board[path_i][path_j] != ' ') {
                                     break;
                                 }
-                                path_i += d[f][0];
-                                path_j += d[f][1];
+                                path_i += bishopDirection[f][0];
+                                path_j += bishopDirection[f][1];
                             }
                         }
                     }
@@ -480,7 +575,7 @@ class Chess {
             }
             if (canMove && c_i != -1 && c_j != -1) {
                 board[c_i][c_j] = ' ';
-                board[i][j] = 'B';
+                board[i][j] = bishop;
                 return true;
             }
         }
@@ -497,9 +592,17 @@ class Chess {
         int c_i = -1;
         int c_j = -1;
 
-        // specifier tells which knight to move, either rank or file
+        // specifier tells which bishop to move, either rank or file
         int s_i = -1;
         int s_j = -1;
+        
+        // variables for both white and black
+        char bishop = 'B';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            bishop = 'b';
+            opponentPieces = "pnbrqk";
+        }
 
         if ("abcdefgh".contains(String.valueOf(move.charAt(1)))) {
             s_j = (int) move.charAt(1) - 97;
@@ -509,24 +612,24 @@ class Chess {
         }
 
         // make sure target square isn't occupied by own piece
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
-                    if (board[x][y] == 'B') {
-                        int b_i = x;
-                        int b_j = y;
-                        int[][] d = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+                    if (board[x][y] == bishop) {
+                        int q_i = x;
+                        int q_j = y;
+
                         // go in all four directions
                         for (int f = 0; f < 4; f++) {
-                            int path_i = x + d[f][0];
-                            int path_j = y + d[f][1];
+                            int path_i = x + bishopDirection[f][0];
+                            int path_j = y + bishopDirection[f][1];
 
                             while (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
                                 if (path_i == i && path_j == j) {
-                                    if (s_i == b_i || s_j == b_j) {
+                                    if (s_i == q_i || s_j == q_j) {
                                         if (firstMove) {
-                                            c_i = b_i;
-                                            c_j = b_j;
+                                            c_i = q_i;
+                                            c_j = q_j;
                                             firstMove = false;
                                         }
                                         else {
@@ -538,8 +641,8 @@ class Chess {
                                 if (board[path_i][path_j] != ' ') {
                                     break;
                                 }
-                                path_i += d[f][0];
-                                path_j += d[f][1];
+                                path_i += bishopDirection[f][0];
+                                path_j += bishopDirection[f][1];
                             }
                         }
                     }
@@ -547,7 +650,7 @@ class Chess {
             }
             if (canMove && c_i != -1 && c_j != -1) {
                 board[c_i][c_j] = ' ';
-                board[i][j] = 'B';
+                board[i][j] = bishop;
                 return true;
             }
         }
@@ -563,27 +666,33 @@ class Chess {
         // candidate queen position
         int c_i = -1;
         int c_j = -1;
+        
+        // variables for both white and black
+        char queen = 'Q';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            queen = 'q';
+            opponentPieces = "pnbrqk";
+        }
 
         // make sure target square isn't occupied by own piece
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
-                    if (board[x][y] == 'Q') {
-                        int b_i = x;
-                        int b_j = y;
-                        int[][] d
-                                = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+                    if (board[x][y] == queen) {
+                        int q_i = x;
+                        int q_j = y;
 
                         // go in all eight directions
                         for (int f = 0; f < 8; f++) {
-                            int path_i = x + d[f][0];
-                            int path_j = y + d[f][1];
+                            int path_i = x + everyDirection[f][0];
+                            int path_j = y + everyDirection[f][1];
 
                             while (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
                                 if (path_i == i && path_j == j) {
                                     if (firstMove) {
-                                        c_i = b_i;
-                                        c_j = b_j;
+                                        c_i = q_i;
+                                        c_j = q_j;
                                         firstMove = false;
                                     }
                                     else {
@@ -595,8 +704,8 @@ class Chess {
                                 if (board[path_i][path_j] != ' ') {
                                     break;
                                 }
-                                path_i += d[f][0];
-                                path_j += d[f][1];
+                                path_i += everyDirection[f][0];
+                                path_j += everyDirection[f][1];
                             }
                         }
                     }
@@ -604,7 +713,7 @@ class Chess {
             }
             if (canMove && c_i != -1 && c_j != -1) {
                 board[c_i][c_j] = ' ';
-                board[i][j] = 'Q';
+                board[i][j] = queen;
                 return true;
             }
         }
@@ -624,6 +733,14 @@ class Chess {
         // specifier tells which queen to move, either rank or file
         int s_i = -1;
         int s_j = -1;
+        
+        // variables for both white and black
+        char queen = 'Q';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            queen = 'q';
+            opponentPieces = "pnbrqk";
+        }
 
         if ("abcdefgh".contains(String.valueOf(move.charAt(1)))) {
             s_j = (int) move.charAt(1) - 97;
@@ -633,17 +750,17 @@ class Chess {
         }
 
         // make sure target square isn't occupied by own piece
-        if (!"PNBRQK".contains(String.valueOf(board[i][j]))) {
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
-                    if (board[x][y] == 'Q') {
+                    if (board[x][y] == queen) {
                         int b_i = x;
                         int b_j = y;
-                        int[][] d = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+
                         // go in all four directions
                         for (int f = 0; f < 8; f++) {
-                            int path_i = x + d[f][0];
-                            int path_j = y + d[f][1];
+                            int path_i = x + everyDirection[f][0];
+                            int path_j = y + everyDirection[f][1];
 
                             while (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
                                 if (path_i == i && path_j == j) {
@@ -662,8 +779,8 @@ class Chess {
                                 if (board[path_i][path_j] != ' ') {
                                     break;
                                 }
-                                path_i += d[f][0];
-                                path_j += d[f][1];
+                                path_i += everyDirection[f][0];
+                                path_j += everyDirection[f][1];
                             }
                         }
                     }
@@ -671,8 +788,162 @@ class Chess {
             }
             if (canMove && c_i != -1 && c_j != -1) {
                 board[c_i][c_j] = ' ';
-                board[i][j] = 'Q';
+                board[i][j] = queen;
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean kingMove(String move) {
+        int i = 8 - Character.getNumericValue(move.charAt(2));
+        int j = (int) move.charAt(1) - 97;
+        
+        // variables for both white and black
+        char king = 'K';
+        String opponentPieces = "PNBRQK";
+        if (turn == Turn.BLACK) {    
+            king = 'k';
+            opponentPieces = "pnbrqk";
+        }
+
+        if (!opponentPieces.contains(String.valueOf(board[i][j]))) {
+            for (int x = 0; x < 8; x++) {
+                for (int y = 0; y < 8; y++) {
+                    if (board[x][y] == king) {
+                        int k_i = x;
+                        int k_j = y;
+
+                        for (int f = 0; f < 8; f++) {
+                            int path_i = x + everyDirection[f][0];
+                            int path_j = y + everyDirection[f][1];
+
+                            if (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
+                                if (path_i == i && path_j == j && !underControl(path_i, path_j)) {
+                                    board[k_i][k_j] = ' ';
+                                    board[i][j] = king;
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Returns true if square is under control by opponents pieces
+    private boolean underControl(int i, int j) {
+        
+        // variables for both white and black
+        int dir = 1;
+        char pawn = 'p';
+        char knight = 'n';
+        char bishop = 'b';
+        char rook = 'r';
+        char queen = 'q';
+        char king = 'k';
+        if (turn == Turn.BLACK) {    
+            dir = -1;
+            pawn = 'P';
+            knight = 'N';
+            bishop = 'B';
+            rook = 'R';
+            queen = 'Q';
+            king = 'K';
+        }
+        
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                // under attack by a pawn
+                if (board[x][y] == pawn) {
+                    if ((x + dir == i && y + 1 == j) || (x + dir == i && y - 1 == j)) {
+                        return true;
+                    }
+                }
+                // under attack by a knight
+                if (board[x][y] == knight) {
+                    for (int m = 0; m < knightMove.length; m++) {
+                        if (x + knightMove[m][0] == i && y + knightMove[m][1] == j) {
+                            return true;
+                        }
+                    }
+                }
+                // under attack by rook
+                if (board[x][y] == rook) {
+                    // go in all 4 directions and see if we hit the square
+                    for (int m = 0; m < rookDirection.length; m++) {
+                        int path_i = x + rookDirection[m][0];
+                        int path_j = y + rookDirection[m][1];
+                        while (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
+                            if (path_i == i && path_j == j) {
+                                return true;
+                            }
+                            // if next square is not empty, we stop
+                            if (board[path_i][path_j] != ' ') {
+                                break;
+                            }
+                            path_i += rookDirection[m][0];
+                            path_j += rookDirection[m][1];
+                        }
+                    }
+                }
+
+                // under attack by bishop
+                if (board[x][y] == bishop) {
+                    // go in all 4 directions and see if we hit the square
+                    for (int m = 0; m < bishopDirection.length; m++) {
+                        int path_i = x + bishopDirection[m][0];
+                        int path_j = y + bishopDirection[m][1];
+                        while (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
+                            if (path_i == i && path_j == j) {
+                                return true;
+                            }
+                            // if next square is not empty, we stop
+                            if (board[path_i][path_j] != ' ') {
+                                break;
+                            }
+                            path_i += bishopDirection[m][0];
+                            path_j += bishopDirection[m][1];
+                        }
+                    }
+                }
+
+                // under attack by queen
+                if (board[x][y] == queen) {
+                    // go in all 8 directions and see if we hit the square
+                    for (int m = 0; m < everyDirection.length; m++) {
+                        int path_i = x + everyDirection[m][0];
+                        int path_j = y + everyDirection[m][1];
+                        while (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
+
+                            if (path_i == i && path_j == j) {
+                                return true;
+                            }
+                            // if next square is not empty, we stop
+                            if (board[path_i][path_j] != ' ') {
+                                break;
+                            }
+                            path_i += everyDirection[m][0];
+                            path_j += everyDirection[m][1];
+                        }
+                    }
+                }
+
+                // under attack by king
+                if (board[x][y] == king) {
+                    // go in all 4 directions and see if we hit the square
+                    for (int m = 0; m < everyDirection.length; m++) {
+                        int path_i = x + everyDirection[m][0];
+                        int path_j = y + everyDirection[m][1];
+                        if (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
+                            if (path_i == i && path_j == j) {
+                                return true;
+                            }
+                        }
+                    }
+                }
             }
         }
         return false;
