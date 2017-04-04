@@ -38,13 +38,13 @@ class Chess {
     };
 
     private char[][] board2 = {
+        {' ', ' ', ' ', 'r', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'P', ' ', 'P', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', 'p', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', 'p', 'K', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
 
@@ -63,14 +63,14 @@ class Chess {
             turn = WHITE;
             drawBoard();
             getPlayerInput();
-            System.out.println(Arrays.toString(canCastle[0]));
+//            System.out.println(Arrays.toString(canCastle[0]));
             if (quit) {
                 break;
             }
             turn = BLACK;
             drawBoard();
             getPlayerInput();
-            System.out.println(Arrays.toString(canCastle[1]));
+//            System.out.println(Arrays.toString(canCastle[1]));
         }
     }
 
@@ -130,7 +130,6 @@ class Chess {
                 }
                 else if (move.length() == 4 && move.charAt(0) == 'p') {
                     movedSuccessfully = ambiguousPawnMove(move);
-                    System.out.println("ok " + movedSuccessfully);
                 }
                 else if (move.length() == 3 && move.charAt(0) == 'r') {
                     movedSuccessfully = unambiguousRookMove(move);
@@ -161,6 +160,7 @@ class Chess {
                 }
             }
         }
+        checkForPromotion();
         // clear the en passant array
         for (int i = 0; i < enPassant.length; i++) {
             enPassant[i] = false;
@@ -871,29 +871,29 @@ class Chess {
                     if (board[x][y] == king) {
                         int k_i = x;
                         int k_j = y;
-                        
+
                         // if king is on starting square it may want to castle
-                        if(k_i == r && k_j == 4) {
+                        if (k_i == r && k_j == 4) {
                             // queenside castle can be made if conditions are met
-                            if(i == r && j == 2 && canCastle[turn][0]
+                            if (i == r && j == 2 && canCastle[turn][0]
                                     && board[r][1] == ' ' && board[r][2] == ' ' && board[r][3] == ' ') {
                                 board[r][0] = ' ';
                                 board[r][4] = ' ';
                                 board[r][2] = king;
                                 board[r][3] = rook;
-                                updateKingCastlingFlags(k_i, k_j);                                
+                                updateKingCastlingFlags(k_i, k_j);
                                 return true;
-                            }    
+                            }
                             // kingside castle
-                            if(i == r && j == 6 && canCastle[turn][1]
+                            if (i == r && j == 6 && canCastle[turn][1]
                                     && board[r][5] == ' ' && board[r][6] == ' ') {
                                 board[r][7] = ' ';
                                 board[r][4] = ' ';
                                 board[r][5] = rook;
                                 board[r][6] = king;
-                                updateKingCastlingFlags(k_i, k_j);                                
+                                updateKingCastlingFlags(k_i, k_j);
                                 return true;
-                            }   
+                            }
                         }
 
                         for (int f = 0; f < 8; f++) {
@@ -905,7 +905,7 @@ class Chess {
                                     board[k_i][k_j] = ' ';
                                     board[i][j] = king;
                                     // update castling rights
-                                    updateKingCastlingFlags(k_i, k_j);                                    
+                                    updateKingCastlingFlags(k_i, k_j);
                                     return true;
                                 }
                             }
@@ -1065,23 +1065,69 @@ class Chess {
         }
     }
 
+    // if a pawn has reached the last rank, we promote it
+    private void checkForPromotion() {
+        int i = 0;
+        int dir = 1;
+        char pawn = 'P';
+        char knight = 'N';
+        char bishop = 'B';
+        char rook = 'R';
+        char queen = 'Q';
+
+        if (turn == BLACK) {
+            i = 7;
+            dir = -1;
+            pawn = 'p';
+            knight = 'n';
+            bishop = 'b';
+            rook = 'r';
+            queen = 'q';
+        }
+
+        int j = -1;
+
+        // search for any pawns on the last rank
+        for (int f = 0; f < 8; f++) {
+            if (board[i][f] == pawn) {
+                j = f;
+            }
+        }
+
+        // if such a pawn is found, ask the player to promote it
+        if (j != -1) {
+            String piece = "";
+            while (!(piece.equals("q") || piece.equals("r") || piece.equals("b") || piece.equals("n"))) {
+                System.out.print("Promote pawn to: ");
+                piece = reader.next();
+            }
+            switch (piece) {
+                case "q":
+                    board[i + dir][j] = ' ';
+                    board[i][j] = queen;
+                    break;
+                case "r":
+                    board[i + dir][j] = ' ';
+                    board[i][j] = rook;
+                    break;
+                case "b":
+                    board[i + dir][j] = ' ';
+                    board[i][j] = bishop;
+                    break;
+
+                case "n":
+                    board[i + dir][j] = ' ';
+                    board[i][j] = knight;
+                    break;
+                default:
+                    System.out.println("Error: unknown piece");
+                    break;
+            }
+        }
+    }
+
     // Takes string as an argument and returns a boolean depending if it is correct syntax
     private boolean validSyntax(String m) {
-
-//        // valid pawn move if has two characters, first is file and second rank eg. "e4"
-//        if (m.length() == 2
-//                && "abcdefgh".contains(String.valueOf(m.charAt(0)))
-//                && "12345678".contains(String.valueOf(m.charAt(1)))) {
-//            return true;
-//        }
-        // valid non-ambiguous pawn move if has three letters, where first two file and
-        // third one is rank eg. "de5"
-//        if (m.length() == 3
-//                && "abcdefgh".contains(String.valueOf(m.charAt(0)))
-//                && "abcdefgh".contains(String.valueOf(m.charAt(1)))
-//                && "12345678".contains(String.valueOf(m.charAt(2)))) {
-//            return true;
-//        }
         // valid piece move if 3 letters, first piece symbol 2nd destination square: "nf3"
         if (m.length() == 3
                 && "pnbrqk".contains(String.valueOf(m.charAt(0)))
