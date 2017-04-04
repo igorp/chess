@@ -9,7 +9,6 @@ public class ChessTest {
     public static void main(String args[]) {
         Chess game = new Chess();
         game.play();
-        game.quit = true;
     }
 }
 
@@ -31,7 +30,7 @@ class Chess {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', 'P', ' ', 'P', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
@@ -126,11 +125,10 @@ class Chess {
             // Check syntax, and then depending on piece enter 'pieceMove' methods, which return 
             // true if the piece can be moved and do so.
             if (validSyntax(move)) {
-
-                if (move.length() == 2) {
+                if (move.length() == 3 && move.charAt(0) == 'p') {
                     movedSuccessfully = unambiguousPawnMove(move);
                 }
-                else if (move.length() == 3 && "abcdefgh".contains(String.valueOf(move.charAt(0)))) {
+                else if (move.length() == 4 && move.charAt(0) == 'p') {
                     movedSuccessfully = ambiguousPawnMove(move);
                     System.out.println("ok " + movedSuccessfully);
                 }
@@ -171,8 +169,8 @@ class Chess {
 
     private boolean unambiguousPawnMove(String move) {
         // convert chess notation to array location numbers
-        int i = 8 - Character.getNumericValue(move.charAt(1));
-        int j = (int) move.charAt(0) - 97;
+        int i = 8 - Character.getNumericValue(move.charAt(2));
+        int j = (int) move.charAt(1) - 97;
 
         // variables for both white and black
         char pawn = 'P';
@@ -244,9 +242,9 @@ class Chess {
 
     private boolean ambiguousPawnMove(String move) {
         // convert chess notation to array location numbers
-        int current_file = (int) move.charAt(0) - 97;
-        int i = 8 - Character.getNumericValue(move.charAt(2));
-        int j = (int) move.charAt(1) - 97;
+        int current_file = (int) move.charAt(1) - 97;
+        int i = 8 - Character.getNumericValue(move.charAt(3));
+        int j = (int) move.charAt(2) - 97;
 
         // variables for both white and black
         char pawn = 'P';
@@ -855,11 +853,15 @@ class Chess {
         int i = 8 - Character.getNumericValue(move.charAt(2));
         int j = (int) move.charAt(1) - 97;
 
-        // variables for both white and black
+        // variables for both white and black, r is rank on which the king is
         char king = 'K';
+        char rook = 'R';
+        int r = 7;
         String opponentPieces = "PNBRQK";
         if (turn == BLACK) {
             king = 'k';
+            rook = 'r';
+            r = 0;
             opponentPieces = "pnbrqk";
         }
 
@@ -869,6 +871,30 @@ class Chess {
                     if (board[x][y] == king) {
                         int k_i = x;
                         int k_j = y;
+                        
+                        // if king is on starting square it may want to castle
+                        if(k_i == r && k_j == 4) {
+                            // queenside castle can be made if conditions are met
+                            if(i == r && j == 2 && canCastle[turn][0]
+                                    && board[r][1] == ' ' && board[r][2] == ' ' && board[r][3] == ' ') {
+                                board[r][0] = ' ';
+                                board[r][4] = ' ';
+                                board[r][2] = king;
+                                board[r][3] = rook;
+                                updateKingCastlingFlags(k_i, k_j);                                
+                                return true;
+                            }    
+                            // kingside castle
+                            if(i == r && j == 6 && canCastle[turn][1]
+                                    && board[r][5] == ' ' && board[r][6] == ' ') {
+                                board[r][7] = ' ';
+                                board[r][4] = ' ';
+                                board[r][5] = rook;
+                                board[r][6] = king;
+                                updateKingCastlingFlags(k_i, k_j);                                
+                                return true;
+                            }   
+                        }
 
                         for (int f = 0; f < 8; f++) {
                             int path_i = x + everyDirection[f][0];
@@ -878,9 +904,8 @@ class Chess {
                                 if (path_i == i && path_j == j && !underControl(path_i, path_j)) {
                                     board[k_i][k_j] = ' ';
                                     board[i][j] = king;
-
                                     // update castling rights
-                                    updateKingCastlingFlags(k_i, k_j);
+                                    updateKingCastlingFlags(k_i, k_j);                                    
                                     return true;
                                 }
                             }
@@ -1043,23 +1068,23 @@ class Chess {
     // Takes string as an argument and returns a boolean depending if it is correct syntax
     private boolean validSyntax(String m) {
 
-        // valid pawn move if has two characters, first is file and second rank eg. "e4"
-        if (m.length() == 2
-                && "abcdefgh".contains(String.valueOf(m.charAt(0)))
-                && "12345678".contains(String.valueOf(m.charAt(1)))) {
-            return true;
-        }
+//        // valid pawn move if has two characters, first is file and second rank eg. "e4"
+//        if (m.length() == 2
+//                && "abcdefgh".contains(String.valueOf(m.charAt(0)))
+//                && "12345678".contains(String.valueOf(m.charAt(1)))) {
+//            return true;
+//        }
         // valid non-ambiguous pawn move if has three letters, where first two file and
         // third one is rank eg. "de5"
-        if (m.length() == 3
-                && "abcdefgh".contains(String.valueOf(m.charAt(0)))
-                && "abcdefgh".contains(String.valueOf(m.charAt(1)))
-                && "12345678".contains(String.valueOf(m.charAt(2)))) {
-            return true;
-        }
+//        if (m.length() == 3
+//                && "abcdefgh".contains(String.valueOf(m.charAt(0)))
+//                && "abcdefgh".contains(String.valueOf(m.charAt(1)))
+//                && "12345678".contains(String.valueOf(m.charAt(2)))) {
+//            return true;
+//        }
         // valid piece move if 3 letters, first piece symbol 2nd destination square: "nf3"
         if (m.length() == 3
-                && "nbrqk".contains(String.valueOf(m.charAt(0)))
+                && "pnbrqk".contains(String.valueOf(m.charAt(0)))
                 && "abcdefgh".contains(String.valueOf(m.charAt(1)))
                 && "12345678".contains(String.valueOf(m.charAt(2)))) {
             return true;
@@ -1067,7 +1092,7 @@ class Chess {
         // valid non-ambiguous piece move, if first piece symbol, then starting rank/file
         // and then destination square, eg. "rfh3"  
         if (m.length() == 4
-                && "nbrqk".contains(String.valueOf(m.charAt(0)))
+                && "pnbrqk".contains(String.valueOf(m.charAt(0)))
                 && "abcdefgh12345678".contains(String.valueOf(m.charAt(1)))
                 && "abcdefgh".contains(String.valueOf(m.charAt(2)))
                 && "12345678".contains(String.valueOf(m.charAt(3)))) {
