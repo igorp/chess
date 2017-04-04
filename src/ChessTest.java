@@ -20,14 +20,16 @@ enum Turn {
 class Chess {
 
     Scanner reader = new Scanner(System.in);
+    // these two array to tell if a certain pawn has just moved two squares, used for en passant
+    boolean[] whitePawnTwoSquares = new boolean[8];
+    boolean[] blackPawnTwoSquares = new boolean[8];
     boolean quit;
-    boolean[] enPassantBlack = new boolean[8];
 
     private char[][] board = {
-        {'r', 'n', 'b', 'q', ' ', 'b', 'n', 'r'},
+        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', 'k', ' ', ' ', ' '},
+        {' ', 'P', ' ', 'P', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
@@ -63,9 +65,15 @@ class Chess {
             if (quit) {
                 break;
             }
+
+            System.out.println(Arrays.toString(whitePawnTwoSquares));
+
             turn = Turn.BLACK;
             drawBoard();
             getPlayerInput();
+
+            System.out.println(Arrays.toString(blackPawnTwoSquares));
+
         }
     }
 
@@ -100,12 +108,15 @@ class Chess {
         // check we can revert back to original position
         //       char[][] oldBoard = board;
         boolean movedSuccessfully = false;
+        boolean[] enPassant = blackPawnTwoSquares;
+        String player = "White";
+        if (turn == Turn.BLACK) {
+            player = "Black";
+            enPassant = whitePawnTwoSquares;
+        }
 
         while (!movedSuccessfully) {
-            String player = "White";
-            if (turn == Turn.BLACK) {
-                player = "Black";
-            }
+
             System.out.print(player + " enter your move: ");
             String move = reader.next();
 
@@ -121,37 +132,42 @@ class Chess {
                 if (move.length() == 2) {
                     movedSuccessfully = unambiguousPawnMove(move);
                 }
-                if (move.length() == 3 && "abcdefgh".contains(String.valueOf(move.charAt(0)))) {
+                else if (move.length() == 3 && "abcdefgh".contains(String.valueOf(move.charAt(0)))) {
                     movedSuccessfully = ambiguousPawnMove(move);
+                    System.out.println("ok " + movedSuccessfully);
                 }
-                if (move.length() == 3 && move.charAt(0) == 'r') {
+                else if (move.length() == 3 && move.charAt(0) == 'r') {
                     movedSuccessfully = unambiguousRookMove(move);
                 }
-                if (move.length() == 4 && move.charAt(0) == 'r') {
+                else if (move.length() == 4 && move.charAt(0) == 'r') {
                     movedSuccessfully = ambiguousRookMove(move);
                 }
-                if (move.length() == 3 && move.charAt(0) == 'n') {
+                else if (move.length() == 3 && move.charAt(0) == 'n') {
                     movedSuccessfully = unambiguousKnightMove(move);
                 }
-                if (move.length() == 4 && move.charAt(0) == 'n') {
+                else if (move.length() == 4 && move.charAt(0) == 'n') {
                     movedSuccessfully = ambiguousKnightMove(move);
                 }
-                if (move.length() == 3 && move.charAt(0) == 'b') {
+                else if (move.length() == 3 && move.charAt(0) == 'b') {
                     movedSuccessfully = unambiguousBishopMove(move);
                 }
-                if (move.length() == 4 && move.charAt(0) == 'b') {
+                else if (move.length() == 4 && move.charAt(0) == 'b') {
                     movedSuccessfully = ambiguousBishopMove(move);
                 }
-                if (move.length() == 3 && move.charAt(0) == 'q') {
+                else if (move.length() == 3 && move.charAt(0) == 'q') {
                     movedSuccessfully = unambiguousQueenMove(move);
                 }
-                if (move.length() == 4 && move.charAt(0) == 'q') {
+                else if (move.length() == 4 && move.charAt(0) == 'q') {
                     movedSuccessfully = ambiguousQueenMove(move);
                 }
-                if (move.length() == 3 && move.charAt(0) == 'k') {
+                else if (move.length() == 3 && move.charAt(0) == 'k') {
                     movedSuccessfully = kingMove(move);
                 }
             }
+        }
+        // clear the en passant array
+        for (int i = 0; i < enPassant.length; i++) {
+            enPassant[i] = false;
         }
     }
 
@@ -164,11 +180,15 @@ class Chess {
         char pawn = 'P';
         int dir = 1;
         int twoMoves = 4;
+        boolean[] enPassantOwn = whitePawnTwoSquares;
+        boolean[] enPassantOpponent = blackPawnTwoSquares;
         String opponentPieces = "pnbrqk";
         if (turn == Turn.BLACK) {
             pawn = 'p';
             dir = -1;
             twoMoves = 3;
+            enPassantOwn = blackPawnTwoSquares;
+            enPassantOpponent = whitePawnTwoSquares;
             opponentPieces = "PNBRQK";
         }
 
@@ -182,6 +202,7 @@ class Chess {
         else if (i == twoMoves && board[i][j] == ' ' && board[i + dir][j] == ' ' && board[i + 2 * dir][j] == pawn) {
             board[i + 2 * dir][j] = ' ';
             board[i][j] = pawn;
+            enPassantOwn[j] = true;
             return true;
         }
         // capture a piece by a pawn to the left (make sure its the only pawn that can
@@ -201,6 +222,25 @@ class Chess {
             board[i][j] = pawn;
             return true;
         }
+        // en passant capture to the left
+        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j]
+                && ((j == 0 && board[i + dir][j + 1] == pawn) || (board[i + dir][j + 1] == pawn
+                && board[i + dir][j - 1] != pawn))) {
+            board[i + dir][j + 1] = ' ';
+            board[i + dir][j] = ' ';
+            board[i][j] = pawn;
+            return true;
+        }
+
+        // en passant capture to the right
+        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j]
+                && ((j == 0 && board[i + dir][j - 1] == pawn) || (board[i + dir][j - 1] == pawn
+                && board[i + dir][j + 1] != pawn))) {
+            board[i + dir][j - 1] = ' ';
+            board[i + dir][j] = ' ';
+            board[i][j] = pawn;
+            return true;
+        }
         return false;
     }
 
@@ -213,10 +253,12 @@ class Chess {
         // variables for both white and black
         char pawn = 'P';
         int dir = 1;
+        boolean[] enPassantOpponent = blackPawnTwoSquares;
         String opponentPieces = "pnbrqk";
         if (turn == Turn.BLACK) {
             pawn = 'p';
             dir = -1;
+            enPassantOpponent = whitePawnTwoSquares;
             opponentPieces = "PNBRQK";
         }
 
@@ -226,6 +268,18 @@ class Chess {
                 && j != 7 && j != 0
                 && board[i + dir][j - 1] == pawn && board[i + dir][j + 1] == pawn) {
             board[i + dir][current_file] = ' ';
+            board[i][j] = pawn;
+            return true;
+        }
+
+        // en passant capture
+        if (Math.abs(current_file - j) == 1
+                && board[i][j] == ' '
+                && j != 7 && j != 0
+                && enPassantOpponent[j]
+                && board[i + dir][j - 1] == pawn && board[i + dir][j + 1] == pawn) {
+            board[i + dir][current_file] = ' ';
+            board[i + dir][j] = ' ';
             board[i][j] = pawn;
             return true;
         }
@@ -245,11 +299,11 @@ class Chess {
         int cr_j = -1;
         boolean firstRookMove = true;
         boolean canMoveRook = true;
-        
+
         // variables for both white and black
         char rook = 'R';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             rook = 'r';
             opponentPieces = "pnbrqk";
         }
@@ -335,10 +389,10 @@ class Chess {
         // specifier tells which rook to move, either rank or file
         int s_i = -1;
         int s_j = -1;
-        
+
         char rook = 'R';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             rook = 'r';
             opponentPieces = "pnbrqk";
         }
@@ -424,10 +478,10 @@ class Chess {
         // candidate knight position
         int cn_i = -1;
         int cn_j = -1;
-        
+
         char knight = 'N';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             knight = 'n';
             opponentPieces = "pnbrqk";
         }
@@ -474,11 +528,11 @@ class Chess {
         // specifier tells which knight to move, either rank or file
         int s_i = -1;
         int s_j = -1;
-        
+
         // variables for both white and black
         char knight = 'N';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             knight = 'n';
             opponentPieces = "pnbrqk";
         }
@@ -528,11 +582,11 @@ class Chess {
         // candidate bishop position
         int c_i = -1;
         int c_j = -1;
-        
+
         // variables for both white and black
         char bishop = 'B';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             bishop = 'b';
             opponentPieces = "pnbrqk";
         }
@@ -595,11 +649,11 @@ class Chess {
         // specifier tells which bishop to move, either rank or file
         int s_i = -1;
         int s_j = -1;
-        
+
         // variables for both white and black
         char bishop = 'B';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             bishop = 'b';
             opponentPieces = "pnbrqk";
         }
@@ -666,11 +720,11 @@ class Chess {
         // candidate queen position
         int c_i = -1;
         int c_j = -1;
-        
+
         // variables for both white and black
         char queen = 'Q';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             queen = 'q';
             opponentPieces = "pnbrqk";
         }
@@ -733,11 +787,11 @@ class Chess {
         // specifier tells which queen to move, either rank or file
         int s_i = -1;
         int s_j = -1;
-        
+
         // variables for both white and black
         char queen = 'Q';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             queen = 'q';
             opponentPieces = "pnbrqk";
         }
@@ -798,11 +852,11 @@ class Chess {
     private boolean kingMove(String move) {
         int i = 8 - Character.getNumericValue(move.charAt(2));
         int j = (int) move.charAt(1) - 97;
-        
+
         // variables for both white and black
         char king = 'K';
         String opponentPieces = "PNBRQK";
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             king = 'k';
             opponentPieces = "pnbrqk";
         }
@@ -835,7 +889,7 @@ class Chess {
 
     // Returns true if square is under control by opponents pieces
     private boolean underControl(int i, int j) {
-        
+
         // variables for both white and black
         int dir = 1;
         char pawn = 'p';
@@ -844,7 +898,7 @@ class Chess {
         char rook = 'r';
         char queen = 'q';
         char king = 'k';
-        if (turn == Turn.BLACK) {    
+        if (turn == Turn.BLACK) {
             dir = -1;
             pawn = 'P';
             knight = 'N';
@@ -853,7 +907,7 @@ class Chess {
             queen = 'Q';
             king = 'K';
         }
-        
+
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 // under attack by a pawn
