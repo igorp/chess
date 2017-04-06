@@ -26,7 +26,7 @@ class Chess {
     boolean[][] canCastle = {{true, true}, {true, true}};
     boolean quit;
 
-    private char[][] board2 = {
+    private char[][] board = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -37,13 +37,13 @@ class Chess {
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
-    private char[][] board = {
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    private char[][] board2 = {
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'r'},
         {' ', ' ', ' ', ' ', 'p', ' ', ' ', ' '},
         {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'R'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', 'R', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'K', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
@@ -180,6 +180,8 @@ class Chess {
         char pawn = 'P';
         int dir = 1;
         int twoMoves = 4;
+        // pawn has to be on this rank to perform en passant
+        int enPassantRank = 3;
         boolean[] enPassantOwn = whitePawnTwoSquares;
         boolean[] enPassantOpponent = blackPawnTwoSquares;
         String opponentPieces = "pnbrqk";
@@ -187,6 +189,7 @@ class Chess {
             pawn = 'p';
             dir = -1;
             twoMoves = 3;
+            enPassantRank = 4;
             enPassantOwn = blackPawnTwoSquares;
             enPassantOpponent = whitePawnTwoSquares;
             opponentPieces = "PNBRQK";
@@ -223,7 +226,7 @@ class Chess {
             return true;
         }
         // en passant capture to the left
-        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j]
+        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j] && i == enPassantRank
                 && ((j == 0 && board[i + dir][j + 1] == pawn) || (board[i + dir][j + 1] == pawn
                 && board[i + dir][j - 1] != pawn))) {
             board[i + dir][j + 1] = ' ';
@@ -233,7 +236,7 @@ class Chess {
         }
 
         // en passant capture to the right
-        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j]
+        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j] && i == enPassantRank
                 && ((j == 0 && board[i + dir][j - 1] == pawn) || (board[i + dir][j - 1] == pawn
                 && board[i + dir][j + 1] != pawn))) {
             board[i + dir][j - 1] = ' ';
@@ -254,11 +257,14 @@ class Chess {
         char pawn = 'P';
         int dir = 1;
         boolean[] enPassantOpponent = blackPawnTwoSquares;
+        // pawn has to be on this rank to perform en passant
+        int enPassantRank = 3;
         String opponentPieces = "pnbrqk";
         if (turn == BLACK) {
             pawn = 'p';
             dir = -1;
             enPassantOpponent = whitePawnTwoSquares;
+            enPassantRank = 4;
             opponentPieces = "PNBRQK";
         }
 
@@ -276,7 +282,7 @@ class Chess {
         if (Math.abs(current_file - j) == 1
                 && board[i][j] == ' '
                 && j != 7 && j != 0
-                && enPassantOpponent[j]
+                && enPassantOpponent[j] && i == enPassantRank
                 && board[i + dir][j - 1] == pawn && board[i + dir][j + 1] == pawn) {
             board[i + dir][current_file] = ' ';
             board[i + dir][j] = ' ';
@@ -893,7 +899,7 @@ class Chess {
                             // kingside castle
                             if (i == r && j == 6 && canCastle[turn][1]
                                     && board[r][5] == ' ' && board[r][6] == ' '
-                                    && !underControl(board, r, 4) && !underControl(board, r, 5) 
+                                    && !underControl(board, r, 4) && !underControl(board, r, 5)
                                     && !underControl(board, r, 6)) {
                                 board[r][7] = ' ';
                                 board[r][4] = ' ';
@@ -1137,23 +1143,29 @@ class Chess {
     // check if game has ended based on checkmate
     private void checkWinningConditions() {
         if (kingIsInCheck(board)) {
-            System.out.print("CHECK");
+            System.out.print("Check");
+            char[][] boardNext;
             boolean mate = true;
 
             // verify for mate by going through all pieces and seeing if there is a move that
             // unchecks the king, if no then it's mate
             int dir = -1;
             // rank on which pawns start
-            int r = 6;
+            int startingRank = 6;
+            boolean[] enPassant = blackPawnTwoSquares;
+            String opponentPieces = "pnbrqk"; // TODO: king needed?
             char pawn = 'P';
             char knight = 'N';
             char bishop = 'B';
             char rook = 'R';
             char queen = 'Q';
             char king = 'K';
+
             if (turn == BLACK) {
                 dir = 1;
-                r = 1;
+                startingRank = 1;
+                enPassant = whitePawnTwoSquares;
+                opponentPieces = "PNBRQK";
                 pawn = 'p';
                 knight = 'n';
                 bishop = 'b';
@@ -1162,16 +1174,50 @@ class Chess {
                 king = 'k';
             }
 
-            // loop through all the squares to find own pieces
+            // loop through all the squares to find pieces that can remove check
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
+                    // pawn moves
                     if (board[x][y] == pawn) {
+                        // one move forward by pawn
                         if (board[x + dir][y] == ' ') {
-                            char[][] boardNext = copyArray(board);
+                            boardNext = copyArray(board);
                             boardNext[x][y] = ' ';
                             boardNext[x + dir][y] = pawn;
-                         //   printBoard(boardNext);
-                            if (kingIsInCheck(boardNext) == false) {
+                            if (!kingIsInCheck(boardNext)) {
+                                mate = false;
+                            }
+                        }
+                        // two moves from starting position by pawn
+                        if (startingRank == x
+                                && board[x + dir][y] == ' ' && board[x + 2 * dir][y] == ' ') {
+                            boardNext = copyArray(board);
+                            boardNext[x][y] = ' ';
+                            boardNext[x + dir][y] = ' ';
+                            boardNext[x + 2 * dir][y] = pawn;
+                            // System.out.println("Possible move: ");
+                            //printBoard(boardNext);
+                            if (!kingIsInCheck(boardNext)) {
+                                mate = false;
+                            }
+                        }
+                        // capture to the left
+                        if (y != 0 && opponentPieces.contains(String.valueOf(board[x + dir][y - 1]))) {
+                            // System.out.println("can capture left");
+                            boardNext = copyArray(board);
+                            boardNext[x][y] = ' ';
+                            boardNext[x + dir][y - 1] = pawn;
+                            if (!kingIsInCheck(boardNext)) {
+                                mate = false;
+                            }
+                        }
+                        // capture to the right
+                        if (y != 7 && opponentPieces.contains(String.valueOf(board[x + dir][y + 1]))) {
+                            // System.out.println("can capture left");
+                            boardNext = copyArray(board);
+                            boardNext[x][y] = ' ';
+                            boardNext[x + dir][y + 1] = pawn;
+                            if (!kingIsInCheck(boardNext)) {
                                 mate = false;
                             }
                         }
@@ -1180,10 +1226,10 @@ class Chess {
             }
 
             if (mate) {
-                System.out.println("MATE");
+                System.out.println("mate!");
             }
             else {
-                System.out.println("");
+                System.out.println("!");
             }
 
         }
