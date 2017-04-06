@@ -38,12 +38,12 @@ class Chess {
     };
 
     private char[][] board = {
-        {' ', ' ', ' ', 'R', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', 'n', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'r', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', 'k', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', 'R', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', 'R', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'K', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
@@ -979,7 +979,7 @@ class Chess {
                             if (path_i == i && path_j == j) {
                                 return true;
                             }
-                            // if next square is not empty, we stop
+                            // if the square is not empty and is not the square we look for, we stop
                             if (b[path_i][path_j] != ' ') {
                                 break;
                             }
@@ -1264,7 +1264,7 @@ class Chess {
                                     boardNext = copyArray(board);
                                     boardNext[x][y] = ' ';
                                     boardNext[n_i][n_j] = knight;
-                                    printBoard(boardNext);
+                                    //    printBoard(boardNext);
                                     if (!kingIsInCheck(boardNext)) {
                                         mate = false;
                                     }
@@ -1273,7 +1273,32 @@ class Chess {
                             }
                         }
                     }
-                   // rook moves
+                    // rook moves
+                    if (board[x][y] == rook) {
+                        for (int m = 0; m < rookDirection.length; m++) {
+                            int r_i = x + rookDirection[m][0];
+                            int r_j = y + rookDirection[m][1];
+                            while (r_i >= 0 && r_i < 8 && r_j >= 0 && r_j < 8) {
+                                // otherwise check if moving to square (which isn't occupied by a 
+                                // friendly piece) removes check on king
+                                if (!ownPieces.contains(String.valueOf(board[r_i][r_j]))) {
+                                    boardNext = copyArray(board);
+                                    boardNext[x][y] = ' ';
+                                    boardNext[r_i][r_j] = rook;
+                                //    printBoard(boardNext);
+                                    if (!kingIsInCheck(boardNext)) {
+                                        mate = false;
+                                    }
+                                }
+                                // if current square is not empty, we stop
+                                if (board[r_i][r_j] != ' ') {
+                                    break;
+                                }
+                                r_i += rookDirection[m][0];
+                                r_j += rookDirection[m][1];
+                            }
+                        }                       
+                    }
                 }
             }
 
@@ -1287,8 +1312,8 @@ class Chess {
         }
 
     }
-
     // returns a copy of a 2D-char array given in as argument
+
     private char[][] copyArray(char[][] original) {
         char[][] copy = new char[original.length][];
         for (int i = 0; i < original.length; i++) {
