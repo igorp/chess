@@ -26,7 +26,7 @@ class Chess {
     boolean[][] canCastle = {{true, true}, {true, true}};
     boolean quit;
 
-    private char[][] board = {
+    private char[][] board2 = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -37,15 +37,15 @@ class Chess {
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
-    private char[][] board2 = {
-        {' ', ' ', ' ', 'r', ' ', ' ', ' ', ' '},
-        {' ', ' ', 'P', ' ', 'P', ' ', ' ', ' '},
+    private char[][] board = {
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'p', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'R'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', 'p', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+        {'K', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
 
     private int[][] knightMove
@@ -61,28 +61,32 @@ class Chess {
         while (!quit) {
 
             turn = WHITE;
-            drawBoard();
+            drawBoard(board);
+
             getPlayerInput();
+            checkWinningConditions();
 //            System.out.println(Arrays.toString(canCastle[0]));
             if (quit) {
                 break;
             }
             turn = BLACK;
-            drawBoard();
+            drawBoard(board);
+
             getPlayerInput();
+            checkWinningConditions();
 //            System.out.println(Arrays.toString(canCastle[1]));
         }
     }
 
-    private void drawBoard() {
+    private void drawBoard(char[][] b) {
         System.out.println("    A B C D E F G H");
         System.out.println("    ---------------");
 
         for (int i = 0; i < 8; i++) {
             System.out.print((8 - i) + " | ");
             for (int j = 0; j < 8; j++) {
-                if (board[i][j] != ' ') {
-                    System.out.print(board[i][j] + " ");
+                if (b[i][j] != ' ') {
+                    System.out.print(b[i][j] + " ");
                 }
                 else if ((i + j) % 2 == 1) {
                     System.out.print("- ");
@@ -876,7 +880,9 @@ class Chess {
                         if (k_i == r && k_j == 4) {
                             // queenside castle can be made if conditions are met
                             if (i == r && j == 2 && canCastle[turn][0]
-                                    && board[r][1] == ' ' && board[r][2] == ' ' && board[r][3] == ' ') {
+                                    && board[r][1] == ' ' && board[r][2] == ' ' && board[r][3] == ' '
+                                    && !underControl(r, 1) && !underControl(r, 2)
+                                    && !underControl(r, 3) && !underControl(r, 4)) {
                                 board[r][0] = ' ';
                                 board[r][4] = ' ';
                                 board[r][2] = king;
@@ -886,7 +892,8 @@ class Chess {
                             }
                             // kingside castle
                             if (i == r && j == 6 && canCastle[turn][1]
-                                    && board[r][5] == ' ' && board[r][6] == ' ') {
+                                    && board[r][5] == ' ' && board[r][6] == ' '
+                                    && !underControl(r, 4) && !underControl(r, 5) && !underControl(r, 6)) {
                                 board[r][7] = ' ';
                                 board[r][4] = ' ';
                                 board[r][5] = rook;
@@ -1124,6 +1131,96 @@ class Chess {
                     break;
             }
         }
+    }
+
+    // check if game has ended based on checkmate
+    private void checkWinningConditions() {
+        if (kingIsInCheck(board)) {
+            System.out.println("CHECK");
+/*            boolean mate = true;
+
+            // verify for mate by going through all own pieces and seeing if there is a move that
+            // unchecks the king, if no then it's mate
+            int dir = 1;
+            // rank on which pawns start
+            int r = 1;
+            char pawn = 'p';
+            char knight = 'n';
+            char bishop = 'b';
+            char rook = 'r';
+            char queen = 'q';
+            char king = 'k';
+            if (turn == BLACK) {
+                dir = -1;
+                r = 6;
+                pawn = 'P';
+                knight = 'N';
+                bishop = 'B';
+                rook = 'R';
+                queen = 'Q';
+                king = 'K';
+            }
+
+            // loop through all the squares to find own pieces
+            for (int x = 0; x < 8; x++) {
+                for (int y = 0; y < 8; y++) {
+                    if (board[x][y] == pawn) {
+                       System.out.println("pawn " + x + " " + y);
+                        if (board[x + dir][y] == ' ') {
+                            char[][] boardNext = copyArray(board);
+//                          System.out.println("POSSIBLE BOARD");
+//                          System.out.println(possibleBoard[2][2]);
+//                          possibleBoard[2][2] = 'X';
+//                          System.out.println(possibleBoard[2][2]);      
+                            boardNext[x][y] = ' ';
+                            boardNext[x + dir][y] = pawn;
+                            if (!kingIsInCheck(boardNext)) {
+                                System.out.println("OK TESTTT");
+                                mate = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (mate) {
+                System.out.println("Game Over!");
+            }
+            else {
+                System.out.println("Check!");
+            }
+*/
+        }
+
+    }
+
+    // returns a copy of a 2D-char array given in as argument
+    private char[][] copyArray(char[][] original) {
+        char[][] copy = new char[original.length][];
+        for (int i = 0; i < original.length; i++) {
+            copy[i] = original[i].clone();
+        }
+        return copy;
+    }
+
+    // Analyzes position and returns true if king is in check 
+    private boolean kingIsInCheck(char b[][]) {
+        char king = 'k';
+        if (turn == BLACK) {
+            king = 'K';
+        }
+        // find the king square
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                if (b[x][y] == king) {
+                    System.out.println("King is here " + x + " " +  y);
+                    if (underControl(x, y)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     // Takes string as an argument and returns a boolean depending if it is correct syntax
