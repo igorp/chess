@@ -39,7 +39,7 @@ class Chess {
 
     private char[][] board = {
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', 'p', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'p', ' ', ' ', ' '},
         {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'R'},
@@ -60,25 +60,25 @@ class Chess {
         System.out.println("Two-player chess game by Igor P.\n");
         while (!quit) {
 
-            turn = WHITE;
-            drawBoard(board);
+            printBoard(board);
 
             getPlayerInput();
-            checkWinningConditions();
 //            System.out.println(Arrays.toString(canCastle[0]));
             if (quit) {
                 break;
             }
             turn = BLACK;
-            drawBoard(board);
+            checkWinningConditions();
+            printBoard(board);
 
             getPlayerInput();
+            turn = WHITE;
             checkWinningConditions();
 //            System.out.println(Arrays.toString(canCastle[1]));
         }
     }
 
-    private void drawBoard(char[][] b) {
+    private void printBoard(char[][] b) {
         System.out.println("    A B C D E F G H");
         System.out.println("    ---------------");
 
@@ -881,8 +881,8 @@ class Chess {
                             // queenside castle can be made if conditions are met
                             if (i == r && j == 2 && canCastle[turn][0]
                                     && board[r][1] == ' ' && board[r][2] == ' ' && board[r][3] == ' '
-                                    && !underControl(r, 1) && !underControl(r, 2)
-                                    && !underControl(r, 3) && !underControl(r, 4)) {
+                                    && !underControl(board, r, 1) && !underControl(board, r, 2)
+                                    && !underControl(board, r, 3) && !underControl(board, r, 4)) {
                                 board[r][0] = ' ';
                                 board[r][4] = ' ';
                                 board[r][2] = king;
@@ -893,7 +893,8 @@ class Chess {
                             // kingside castle
                             if (i == r && j == 6 && canCastle[turn][1]
                                     && board[r][5] == ' ' && board[r][6] == ' '
-                                    && !underControl(r, 4) && !underControl(r, 5) && !underControl(r, 6)) {
+                                    && !underControl(board, r, 4) && !underControl(board, r, 5) 
+                                    && !underControl(board, r, 6)) {
                                 board[r][7] = ' ';
                                 board[r][4] = ' ';
                                 board[r][5] = rook;
@@ -908,7 +909,7 @@ class Chess {
                             int path_j = y + everyDirection[f][1];
 
                             if (path_i >= 0 && path_i < 8 && path_j >= 0 && path_j < 8) {
-                                if (path_i == i && path_j == j && !underControl(path_i, path_j)) {
+                                if (path_i == i && path_j == j && !underControl(board, path_i, path_j)) {
                                     board[k_i][k_j] = ' ';
                                     board[i][j] = king;
                                     // update castling rights
@@ -925,7 +926,7 @@ class Chess {
     }
 
     // Returns true if square is under control by opponents pieces
-    private boolean underControl(int i, int j) {
+    private boolean underControl(char b[][], int i, int j) {
 
         // variables for both white and black
         int dir = 1;
@@ -948,13 +949,13 @@ class Chess {
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 // under attack by a pawn
-                if (board[x][y] == pawn) {
+                if (b[x][y] == pawn) {
                     if ((x + dir == i && y + 1 == j) || (x + dir == i && y - 1 == j)) {
                         return true;
                     }
                 }
                 // under attack by a knight
-                if (board[x][y] == knight) {
+                if (b[x][y] == knight) {
                     for (int m = 0; m < knightMove.length; m++) {
                         if (x + knightMove[m][0] == i && y + knightMove[m][1] == j) {
                             return true;
@@ -962,7 +963,7 @@ class Chess {
                     }
                 }
                 // under attack by rook
-                if (board[x][y] == rook) {
+                if (b[x][y] == rook) {
                     // go in all 4 directions and see if we hit the square
                     for (int m = 0; m < rookDirection.length; m++) {
                         int path_i = x + rookDirection[m][0];
@@ -972,7 +973,7 @@ class Chess {
                                 return true;
                             }
                             // if next square is not empty, we stop
-                            if (board[path_i][path_j] != ' ') {
+                            if (b[path_i][path_j] != ' ') {
                                 break;
                             }
                             path_i += rookDirection[m][0];
@@ -982,7 +983,7 @@ class Chess {
                 }
 
                 // under attack by bishop
-                if (board[x][y] == bishop) {
+                if (b[x][y] == bishop) {
                     // go in all 4 directions and see if we hit the square
                     for (int m = 0; m < bishopDirection.length; m++) {
                         int path_i = x + bishopDirection[m][0];
@@ -992,7 +993,7 @@ class Chess {
                                 return true;
                             }
                             // if next square is not empty, we stop
-                            if (board[path_i][path_j] != ' ') {
+                            if (b[path_i][path_j] != ' ') {
                                 break;
                             }
                             path_i += bishopDirection[m][0];
@@ -1002,7 +1003,7 @@ class Chess {
                 }
 
                 // under attack by queen
-                if (board[x][y] == queen) {
+                if (b[x][y] == queen) {
                     // go in all 8 directions and see if we hit the square
                     for (int m = 0; m < everyDirection.length; m++) {
                         int path_i = x + everyDirection[m][0];
@@ -1013,7 +1014,7 @@ class Chess {
                                 return true;
                             }
                             // if next square is not empty, we stop
-                            if (board[path_i][path_j] != ' ') {
+                            if (b[path_i][path_j] != ' ') {
                                 break;
                             }
                             path_i += everyDirection[m][0];
@@ -1023,7 +1024,7 @@ class Chess {
                 }
 
                 // under attack by king
-                if (board[x][y] == king) {
+                if (b[x][y] == king) {
                     // go in all 4 directions and see if we hit the square
                     for (int m = 0; m < everyDirection.length; m++) {
                         int path_i = x + everyDirection[m][0];
@@ -1136,46 +1137,41 @@ class Chess {
     // check if game has ended based on checkmate
     private void checkWinningConditions() {
         if (kingIsInCheck(board)) {
-            System.out.println("CHECK");
-/*            boolean mate = true;
+            System.out.print("CHECK");
+            boolean mate = true;
 
-            // verify for mate by going through all own pieces and seeing if there is a move that
+            // verify for mate by going through all pieces and seeing if there is a move that
             // unchecks the king, if no then it's mate
-            int dir = 1;
+            int dir = -1;
             // rank on which pawns start
-            int r = 1;
-            char pawn = 'p';
-            char knight = 'n';
-            char bishop = 'b';
-            char rook = 'r';
-            char queen = 'q';
-            char king = 'k';
+            int r = 6;
+            char pawn = 'P';
+            char knight = 'N';
+            char bishop = 'B';
+            char rook = 'R';
+            char queen = 'Q';
+            char king = 'K';
             if (turn == BLACK) {
-                dir = -1;
-                r = 6;
-                pawn = 'P';
-                knight = 'N';
-                bishop = 'B';
-                rook = 'R';
-                queen = 'Q';
-                king = 'K';
+                dir = 1;
+                r = 1;
+                pawn = 'p';
+                knight = 'n';
+                bishop = 'b';
+                rook = 'r';
+                queen = 'q';
+                king = 'k';
             }
 
             // loop through all the squares to find own pieces
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
                     if (board[x][y] == pawn) {
-                       System.out.println("pawn " + x + " " + y);
                         if (board[x + dir][y] == ' ') {
                             char[][] boardNext = copyArray(board);
-//                          System.out.println("POSSIBLE BOARD");
-//                          System.out.println(possibleBoard[2][2]);
-//                          possibleBoard[2][2] = 'X';
-//                          System.out.println(possibleBoard[2][2]);      
                             boardNext[x][y] = ' ';
                             boardNext[x + dir][y] = pawn;
-                            if (!kingIsInCheck(boardNext)) {
-                                System.out.println("OK TESTTT");
+                         //   printBoard(boardNext);
+                            if (kingIsInCheck(boardNext) == false) {
                                 mate = false;
                             }
                         }
@@ -1184,12 +1180,12 @@ class Chess {
             }
 
             if (mate) {
-                System.out.println("Game Over!");
+                System.out.println("MATE");
             }
             else {
-                System.out.println("Check!");
+                System.out.println("");
             }
-*/
+
         }
 
     }
@@ -1205,16 +1201,15 @@ class Chess {
 
     // Analyzes position and returns true if king is in check 
     private boolean kingIsInCheck(char b[][]) {
-        char king = 'k';
+        char king = 'K';
         if (turn == BLACK) {
-            king = 'K';
+            king = 'k';
         }
         // find the king square
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 if (b[x][y] == king) {
-                    System.out.println("King is here " + x + " " +  y);
-                    if (underControl(x, y)) {
+                    if (underControl(b, x, y)) {
                         return true;
                     }
                 }
