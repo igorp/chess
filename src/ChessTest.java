@@ -38,13 +38,13 @@ class Chess {
     };
 
     private char[][] board = {
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'r'},
+        {' ', ' ', ' ', 'R', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'n', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'k', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', 'k', ' ', ' ', ' '},
-        {'p', ' ', 'p', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', 'R', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', 'P', ' ', ' ', ' ', ' '},
         {'K', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
 
@@ -1156,6 +1156,7 @@ class Chess {
             int enPassantRank = 3;
             boolean[] enPassant = blackPawnTwoSquares;
             String opponentPieces = "pnbrqk"; // TODO: king needed?
+            String ownPieces = "PNBRQK";
             char pawn = 'P';
             char knight = 'N';
             char bishop = 'B';
@@ -1169,6 +1170,7 @@ class Chess {
                 enPassantRank = 4;
                 enPassant = whitePawnTwoSquares;
                 opponentPieces = "PNBRQK";
+                ownPieces = "pnbrqk";
                 pawn = 'p';
                 knight = 'n';
                 bishop = 'b';
@@ -1236,7 +1238,7 @@ class Chess {
                             if (!kingIsInCheck(boardNext)) {
                                 mate = false;
                             }
-                        }                        
+                        }
                         // en passant to the right
                         if (y != 7 && x == enPassantRank && enPassant[y + 1]) {
                             // System.out.println("can capture left");
@@ -1250,6 +1252,28 @@ class Chess {
                             }
                         }
                     }
+                    // knight moves
+                    if (board[x][y] == knight) {
+                        for (int m = 0; m < knightMove.length; m++) {
+                            int n_i = x + knightMove[m][0];
+                            int n_j = y + knightMove[m][1];
+                            // make sure within bounds
+                            if (n_i >= 0 && n_i < 8 && n_j >= 0 && n_j < 8) {
+                                // make sure possible square doesn't contain own pieces
+                                if (!ownPieces.contains(String.valueOf(board[n_i][n_j]))) {
+                                    boardNext = copyArray(board);
+                                    boardNext[x][y] = ' ';
+                                    boardNext[n_i][n_j] = knight;
+                                    printBoard(boardNext);
+                                    if (!kingIsInCheck(boardNext)) {
+                                        mate = false;
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                   // rook moves
                 }
             }
 
