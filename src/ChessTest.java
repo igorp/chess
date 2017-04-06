@@ -26,7 +26,7 @@ class Chess {
     boolean[][] canCastle = {{true, true}, {true, true}};
     boolean quit;
 
-    private char[][] board = {
+    private char[][] board2 = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -37,14 +37,14 @@ class Chess {
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
-    private char[][] board2 = {
+    private char[][] board = {
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'r'},
-        {' ', ' ', ' ', ' ', 'p', ' ', ' ', ' '},
-        {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', 'R', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'k', ' ', ' ', ' '},
+        {'p', ' ', 'p', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'P', ' ', ' ', ' ', ' '},
         {'K', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
 
@@ -225,8 +225,9 @@ class Chess {
             board[i][j] = pawn;
             return true;
         }
+
         // en passant capture to the left
-        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j] && i == enPassantRank
+        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j] && i + dir == enPassantRank
                 && ((j == 0 && board[i + dir][j + 1] == pawn) || (board[i + dir][j + 1] == pawn
                 && board[i + dir][j - 1] != pawn))) {
             board[i + dir][j + 1] = ' ';
@@ -236,7 +237,7 @@ class Chess {
         }
 
         // en passant capture to the right
-        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j] && i == enPassantRank
+        else if (board[i][j] == ' ' && j != 7 && enPassantOpponent[j] && i + dir == enPassantRank
                 && ((j == 0 && board[i + dir][j - 1] == pawn) || (board[i + dir][j - 1] == pawn
                 && board[i + dir][j + 1] != pawn))) {
             board[i + dir][j - 1] = ' ';
@@ -282,7 +283,7 @@ class Chess {
         if (Math.abs(current_file - j) == 1
                 && board[i][j] == ' '
                 && j != 7 && j != 0
-                && enPassantOpponent[j] && i == enPassantRank
+                && enPassantOpponent[j] && i + dir == enPassantRank
                 && board[i + dir][j - 1] == pawn && board[i + dir][j + 1] == pawn) {
             board[i + dir][current_file] = ' ';
             board[i + dir][j] = ' ';
@@ -1152,6 +1153,7 @@ class Chess {
             int dir = -1;
             // rank on which pawns start
             int startingRank = 6;
+            int enPassantRank = 3;
             boolean[] enPassant = blackPawnTwoSquares;
             String opponentPieces = "pnbrqk"; // TODO: king needed?
             char pawn = 'P';
@@ -1164,6 +1166,7 @@ class Chess {
             if (turn == BLACK) {
                 dir = 1;
                 startingRank = 1;
+                enPassantRank = 4;
                 enPassant = whitePawnTwoSquares;
                 opponentPieces = "PNBRQK";
                 pawn = 'p';
@@ -1217,6 +1220,31 @@ class Chess {
                             boardNext = copyArray(board);
                             boardNext[x][y] = ' ';
                             boardNext[x + dir][y + 1] = pawn;
+                            if (!kingIsInCheck(boardNext)) {
+                                mate = false;
+                            }
+                        }
+                        //            System.out.println(y + " " + Arrays.toString(enPassant));
+                        // en Passant to the left
+                        if (y != 0 && x == enPassantRank && enPassant[y - 1]) {
+                            // System.out.println("can capture left");
+                            boardNext = copyArray(board);
+                            boardNext[x][y] = ' ';
+                            boardNext[x][y - 1] = ' ';
+                            boardNext[x + dir][y - 1] = pawn;
+                            //     printBoard(boardNext);
+                            if (!kingIsInCheck(boardNext)) {
+                                mate = false;
+                            }
+                        }                        
+                        // en passant to the right
+                        if (y != 7 && x == enPassantRank && enPassant[y + 1]) {
+                            // System.out.println("can capture left");
+                            boardNext = copyArray(board);
+                            boardNext[x][y] = ' ';
+                            boardNext[x][y + 1] = ' ';
+                            boardNext[x + dir][y + 1] = pawn;
+                            //     printBoard(boardNext);
                             if (!kingIsInCheck(boardNext)) {
                                 mate = false;
                             }
