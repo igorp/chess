@@ -1218,15 +1218,12 @@ class Chess {
                             boardNext[x][y] = ' ';
                             boardNext[x + dir][y] = ' ';
                             boardNext[x + 2 * dir][y] = pawn;
-                            // System.out.println("Possible move: ");
-                            //printBoard(boardNext);
                             if (!kingIsInCheck(boardNext)) {
                                 mate = false;
                             }
                         }
                         // capture to the left
                         if (y != 0 && opponentPieces.contains(String.valueOf(board[x + dir][y - 1]))) {
-                            // System.out.println("can capture left");
                             boardNext = copyArray(board);
                             boardNext[x][y] = ' ';
                             boardNext[x + dir][y - 1] = pawn;
@@ -1236,7 +1233,6 @@ class Chess {
                         }
                         // capture to the right
                         if (y != 7 && opponentPieces.contains(String.valueOf(board[x + dir][y + 1]))) {
-                            // System.out.println("can capture left");
                             boardNext = copyArray(board);
                             boardNext[x][y] = ' ';
                             boardNext[x + dir][y + 1] = pawn;
@@ -1244,27 +1240,22 @@ class Chess {
                                 mate = false;
                             }
                         }
-                        //            System.out.println(y + " " + Arrays.toString(enPassant));
                         // en Passant to the left
                         if (y != 0 && x == enPassantRank && enPassant[y - 1]) {
-                            // System.out.println("can capture left");
                             boardNext = copyArray(board);
                             boardNext[x][y] = ' ';
                             boardNext[x][y - 1] = ' ';
                             boardNext[x + dir][y - 1] = pawn;
-                            //     printBoard(boardNext);
                             if (!kingIsInCheck(boardNext)) {
                                 mate = false;
                             }
                         }
                         // en passant to the right
                         if (y != 7 && x == enPassantRank && enPassant[y + 1]) {
-                            // System.out.println("can capture left");
                             boardNext = copyArray(board);
                             boardNext[x][y] = ' ';
                             boardNext[x][y + 1] = ' ';
                             boardNext[x + dir][y + 1] = pawn;
-                            //     printBoard(boardNext);
                             if (!kingIsInCheck(boardNext)) {
                                 mate = false;
                             }
@@ -1282,7 +1273,6 @@ class Chess {
                                     boardNext = copyArray(board);
                                     boardNext[x][y] = ' ';
                                     boardNext[n_i][n_j] = knight;
-                                    //    printBoard(boardNext);
                                     if (!kingIsInCheck(boardNext)) {
                                         mate = false;
                                     }
@@ -1303,7 +1293,6 @@ class Chess {
                                     boardNext = copyArray(board);
                                     boardNext[x][y] = ' ';
                                     boardNext[r_i][r_j] = rook;
-                                    //    printBoard(boardNext);
                                     if (!kingIsInCheck(boardNext)) {
                                         mate = false;
                                     }
@@ -1327,7 +1316,6 @@ class Chess {
                                     boardNext = copyArray(board);
                                     boardNext[x][y] = ' ';
                                     boardNext[b_i][b_j] = bishop;
-                                    //   printBoard(boardNext);
                                     if (!kingIsInCheck(boardNext)) {
                                         mate = false;
                                     }
@@ -1351,7 +1339,6 @@ class Chess {
                                     boardNext = copyArray(board);
                                     boardNext[x][y] = ' ';
                                     boardNext[q_i][q_j] = queen;
-                                    //    printBoard(boardNext);
                                     if (!kingIsInCheck(boardNext)) {
                                         mate = false;
                                     }
@@ -1375,7 +1362,6 @@ class Chess {
                                     boardNext = copyArray(board);
                                     boardNext[x][y] = ' ';
                                     boardNext[k_i][k_j] = king;
-                                    //     printBoard(boardNext);
                                     if (!kingIsInCheck(boardNext)) {
                                         mate = false;
                                     }
