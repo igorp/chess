@@ -1499,7 +1499,8 @@ class Chess {
                             int k_i = x + everyDirection[m][0];
                             int k_j = y + everyDirection[m][1];
                             if (k_i >= 0 && k_i < 8 && k_j >= 0 && k_j < 8) {
-                                if (!ownPieces.contains(String.valueOf(board[k_i][k_j]))) {
+                                if (!ownPieces.contains(String.valueOf(board[k_i][k_j]))
+                                   && !underControl(board, k_i, k_j)) {
                                     stalemate = false;
                                 }
                             }
