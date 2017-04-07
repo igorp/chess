@@ -26,6 +26,9 @@ class Chess {
     boolean[][] canCastle = {{true, true}, {true, true}};
     boolean quit;
 
+    ArrayList<char[][]> playedPositions = new ArrayList<char[][]>();
+    ArrayList<Integer> playedPositionsCounter = new ArrayList<Integer>();
+
     private char[][] board = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
@@ -47,6 +50,16 @@ class Chess {
         {' ', ' ', ' ', ' ', ' ', ' ', 'Q', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
+    private char[][] board3 = {
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'k'},
+        {' ', ' ', ' ', ' ', ' ', 'K', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'r', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', 'Q', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+    };
 
     private int[][] knightMove
             = {{-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {-2, -1}, {-2, 1}, {2, -1}, {2, 1}};
@@ -58,6 +71,9 @@ class Chess {
 
     public void play() {
         System.out.println("Two-player chess game by Igor P.\n");
+        playedPositions.add(copyArray(board));
+        playedPositionsCounter.add(1);
+
         while (!quit) {
 
             printBoard(board);
@@ -1187,6 +1203,31 @@ class Chess {
             queen = 'q';
             king = 'k';
         }
+
+        // check for 3-fold repitition
+        boolean positionAlreadyPlayed = false;
+        // first check if the current position has been already played
+        for (int n = 0; n < playedPositions.size(); n++) {
+            if (positionsAreEqual(playedPositions.get(n), board)) {
+                Integer newValue = playedPositionsCounter.get(n);
+                newValue++;
+                playedPositionsCounter.set(n, newValue);
+                positionAlreadyPlayed = true;
+            }
+        }
+        // if that position hasn't been encountered, we add it to the arraylist
+        if (!positionAlreadyPlayed) {
+            playedPositions.add(copyArray(board));
+            playedPositionsCounter.add(1);
+        }
+        // now we can check for draw by repitition, by looking if a position has been played thrice
+        for (int n = 0; n < playedPositionsCounter.size(); n++) {
+            if (playedPositionsCounter.get(n) == 3) {
+                System.out.println("Draw by repitition.");
+                quit = true;
+            }
+        }
+
         //check for check and mate
         if (kingIsInCheck(board)) {
             System.out.print("Check");
@@ -1533,6 +1574,19 @@ class Chess {
             }
         }
         return false;
+    }
+
+    private boolean positionsAreEqual(char[][] a, char[][] b) {
+        if (a.length == b.length && a[0].length == b[0].length) {
+            for (int i = 0; i < a.length; i++) {
+                for (int j = 0; j < a[0].length; j++) {
+                    if (a[i][j] != b[i][j]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     // Takes string as an argument and returns a boolean depending if it is correct syntax
