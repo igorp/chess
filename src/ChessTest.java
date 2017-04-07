@@ -22,8 +22,10 @@ class Chess {
     boolean[] whitePawnTwoSquares = new boolean[8];
     boolean[] blackPawnTwoSquares = new boolean[8];
     // Conditions which determine if a king can castle. First array for white, second for black.
-    // First boolean tells if can castle queenside, second boolean tells if can castle kingside.
+    // First boolean in innder array tells if can castle queenside, second boolean tells if 
+    // can castle kingside.
     boolean[][] canCastle = {{true, true}, {true, true}};
+    int turn = WHITE;
     boolean quit;
 
     ArrayList<char[][]> playedPositions = new ArrayList<char[][]>();
@@ -40,61 +42,36 @@ class Chess {
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
-    private char[][] board2 = {
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'k'},
-        {' ', ' ', ' ', ' ', ' ', 'K', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', 'r', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', 'Q', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-    };
-    private char[][] board3 = {
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'k'},
-        {' ', ' ', ' ', ' ', ' ', 'K', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', 'r', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', 'Q', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-    };
-
     private int[][] knightMove
             = {{-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {-2, -1}, {-2, 1}, {2, -1}, {2, 1}};
 
     private int[][] rookDirection = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
     private int[][] bishopDirection = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
-    private int[][] everyDirection = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {0, 1}, {1, 0}, {-1, 0}, {0, -1}};
-    int turn = WHITE;
+    private int[][] everyDirection = {{1, 1}, {-1, 1}, {1, -1}, {-1, -1},
+    {0, 1}, {1, 0}, {-1, 0}, {0, -1}};
 
     public void play() {
         System.out.println("Two-player chess game by Igor P.\n");
         playedPositions.add(copyArray(board));
         playedPositionsCounter.add(1);
 
+        // main game loop
         while (!quit) {
-
             printBoard(board);
-            if (quit) {
-                break;
-            }
+
             getPlayerInput();
             turn = BLACK;
             checkWinningConditions();
-
-            printBoard(board);
             if (quit) {
                 break;
             }
+            printBoard(board);
+
             getPlayerInput();
             turn = WHITE;
-            checkWinningConditions();
-            if (quit) {
-                printBoard(board);
-            }
+            checkWinningConditions();           
         }
+        printBoard(board);
     }
 
     private void printBoard(char[][] b) {
@@ -145,7 +122,7 @@ class Chess {
                 return;
             }
 
-            // Check syntax, and then depending on piece enter 'pieceMove' methods, which return 
+            // Check syntax, and then depending on piece call appropriate methods, which return 
             // true if the piece can be moved and do so.
             if (validSyntax(move)) {
                 if (move.length() == 3 && move.charAt(0) == 'p') {
@@ -190,7 +167,7 @@ class Chess {
             }
         }
         checkForPromotion();
-        // clear the en passant array
+        // clear the en passant array, since en passant is active only one turn
         for (int i = 0; i < enPassant.length; i++) {
             enPassant[i] = false;
         }
@@ -227,7 +204,8 @@ class Chess {
             return true;
         }
         // two moves forward from starting position by a pawn
-        else if (i == twoMoves && board[i][j] == ' ' && board[i + dir][j] == ' ' && board[i + 2 * dir][j] == pawn) {
+        else if (i == twoMoves && board[i][j] == ' ' 
+                && board[i + dir][j] == ' ' && board[i + 2 * dir][j] == pawn) {
             board[i + 2 * dir][j] = ' ';
             board[i][j] = pawn;
             enPassantOwn[j] = true;
@@ -1547,8 +1525,8 @@ class Chess {
             }
         }
     }
+    
     // returns a copy of a 2D-char array given in as argument
-
     private char[][] copyArray(char[][] original) {
         char[][] copy = new char[original.length][];
         for (int i = 0; i < original.length; i++) {
@@ -1557,7 +1535,7 @@ class Chess {
         return copy;
     }
 
-    // Analyzes position and returns true if king is in check 
+    // returns true if king is in check in passed board argument
     private boolean kingIsInCheck(char b[][]) {
         char king = 'K';
         if (turn == BLACK) {
@@ -1576,6 +1554,7 @@ class Chess {
         return false;
     }
 
+    // returns true if the two given boards are identical
     private boolean positionsAreEqual(char[][] a, char[][] b) {
         if (a.length == b.length && a[0].length == b[0].length) {
             for (int i = 0; i < a.length; i++) {
