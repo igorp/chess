@@ -1114,20 +1114,16 @@ class Chess {
             }
             switch (piece) {
                 case "queen":
-                    board[i + dir][j] = ' ';
                     board[i][j] = queen;
                     break;
                 case "rook":
-                    board[i + dir][j] = ' ';
                     board[i][j] = rook;
                     break;
                 case "bishop":
-                    board[i + dir][j] = ' ';
                     board[i][j] = bishop;
                     break;
 
                 case "knight":
-                    board[i + dir][j] = ' ';
                     board[i][j] = knight;
                     break;
                 default:
