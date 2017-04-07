@@ -26,7 +26,7 @@ class Chess {
     boolean[][] canCastle = {{true, true}, {true, true}};
     boolean quit;
 
-    private char[][] board2 = {
+    private char[][] board = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -37,15 +37,15 @@ class Chess {
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
-    private char[][] board = {
-        {' ', ' ', ' ', ' ', 'r', ' ', ' ', ' '},
+    private char[][] board2 = {
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', 'k'},
+        {' ', ' ', ' ', ' ', ' ', 'K', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', 'k', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'r', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', 'R', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'K', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+        {' ', ' ', ' ', ' ', ' ', ' ', 'Q', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
     };
 
     private int[][] knightMove
@@ -61,20 +61,23 @@ class Chess {
         while (!quit) {
 
             printBoard(board);
-
-            getPlayerInput();
-//            System.out.println(Arrays.toString(canCastle[0]));
             if (quit) {
                 break;
             }
+            getPlayerInput();
             turn = BLACK;
             checkWinningConditions();
-            printBoard(board);
 
+            printBoard(board);
+            if (quit) {
+                break;
+            }
             getPlayerInput();
             turn = WHITE;
             checkWinningConditions();
-//            System.out.println(Arrays.toString(canCastle[1]));
+            if (quit) {
+                printBoard(board);
+            }
         }
     }
 
@@ -107,7 +110,7 @@ class Chess {
 
         // make a backup copy of the old position, so that if the new move appears to put king in 
         // check we can revert back to original position
-        //       char[][] oldBoard = board;
+        char[][] oldBoard = copyArray(board);
         boolean movedSuccessfully = false;
         boolean[] enPassant = blackPawnTwoSquares;
         String player = "White";
@@ -162,6 +165,12 @@ class Chess {
                 else if (move.length() == 3 && move.charAt(0) == 'k') {
                     movedSuccessfully = kingMove(move);
                 }
+            }
+            // if in new position king is in check, revert back to old an continue asking for a move
+            if (kingIsInCheck(board)) {
+                System.out.println("Your king is in check.");
+                movedSuccessfully = false;
+                board = copyArray(oldBoard);
             }
         }
         checkForPromotion();
@@ -1112,25 +1121,26 @@ class Chess {
         // if such a pawn is found, ask the player to promote it
         if (j != -1) {
             String piece = "";
-            while (!(piece.equals("q") || piece.equals("r") || piece.equals("b") || piece.equals("n"))) {
+            while (!(piece.equals("queen") || piece.equals("rook")
+                    || piece.equals("bishop") || piece.equals("knight"))) {
                 System.out.print("Promote pawn to: ");
                 piece = reader.next();
             }
             switch (piece) {
-                case "q":
+                case "queen":
                     board[i + dir][j] = ' ';
                     board[i][j] = queen;
                     break;
-                case "r":
+                case "rook":
                     board[i + dir][j] = ' ';
                     board[i][j] = rook;
                     break;
-                case "b":
+                case "bishop":
                     board[i + dir][j] = ' ';
                     board[i][j] = bishop;
                     break;
 
-                case "n":
+                case "knight":
                     board[i + dir][j] = ' ';
                     board[i][j] = knight;
                     break;
@@ -1143,42 +1153,43 @@ class Chess {
 
     // check if game has ended based on checkmate
     private void checkWinningConditions() {
+
+        char[][] boardNext;
+        boolean mate = true;
+
+        // verify for mate by going through all pieces and seeing if there is a move that
+        // unchecks the king, if no then it's mate
+        int dir = -1;
+        // rank on which pawns start
+        int startingRank = 6;
+        int enPassantRank = 3;
+        boolean[] enPassant = blackPawnTwoSquares;
+        String opponentPieces = "pnbrqk"; // TODO: king needed?
+        String ownPieces = "PNBRQK";
+        char pawn = 'P';
+        char knight = 'N';
+        char bishop = 'B';
+        char rook = 'R';
+        char queen = 'Q';
+        char king = 'K';
+
+        if (turn == BLACK) {
+            dir = 1;
+            startingRank = 1;
+            enPassantRank = 4;
+            enPassant = whitePawnTwoSquares;
+            opponentPieces = "PNBRQK";
+            ownPieces = "pnbrqk";
+            pawn = 'p';
+            knight = 'n';
+            bishop = 'b';
+            rook = 'r';
+            queen = 'q';
+            king = 'k';
+        }
+        //check for check and mate
         if (kingIsInCheck(board)) {
             System.out.print("Check");
-            char[][] boardNext;
-            boolean mate = true;
-
-            // verify for mate by going through all pieces and seeing if there is a move that
-            // unchecks the king, if no then it's mate
-            int dir = -1;
-            // rank on which pawns start
-            int startingRank = 6;
-            int enPassantRank = 3;
-            boolean[] enPassant = blackPawnTwoSquares;
-            String opponentPieces = "pnbrqk"; // TODO: king needed?
-            String ownPieces = "PNBRQK";
-            char pawn = 'P';
-            char knight = 'N';
-            char bishop = 'B';
-            char rook = 'R';
-            char queen = 'Q';
-            char king = 'K';
-
-            if (turn == BLACK) {
-                dir = 1;
-                startingRank = 1;
-                enPassantRank = 4;
-                enPassant = whitePawnTwoSquares;
-                opponentPieces = "PNBRQK";
-                ownPieces = "pnbrqk";
-                pawn = 'p';
-                knight = 'n';
-                bishop = 'b';
-                rook = 'r';
-                queen = 'q';
-                king = 'k';
-            }
-
             // loop through all the squares to find pieces that can remove check
             for (int x = 0; x < 8; x++) {
                 for (int y = 0; y < 8; y++) {
@@ -1279,13 +1290,13 @@ class Chess {
                             int r_i = x + rookDirection[m][0];
                             int r_j = y + rookDirection[m][1];
                             while (r_i >= 0 && r_i < 8 && r_j >= 0 && r_j < 8) {
-                                // otherwise check if moving to square (which isn't occupied by a 
+                                // check if moving to square (which isn't occupied by a 
                                 // friendly piece) removes check on king
                                 if (!ownPieces.contains(String.valueOf(board[r_i][r_j]))) {
                                     boardNext = copyArray(board);
                                     boardNext[x][y] = ' ';
                                     boardNext[r_i][r_j] = rook;
-                                //    printBoard(boardNext);
+                                    //    printBoard(boardNext);
                                     if (!kingIsInCheck(boardNext)) {
                                         mate = false;
                                     }
@@ -1297,20 +1308,203 @@ class Chess {
                                 r_i += rookDirection[m][0];
                                 r_j += rookDirection[m][1];
                             }
-                        }                       
+                        }
+                    }
+                    // bishop moves
+                    if (board[x][y] == bishop) {
+                        for (int m = 0; m < bishopDirection.length; m++) {
+                            int b_i = x + bishopDirection[m][0];
+                            int b_j = y + bishopDirection[m][1];
+                            while (b_i >= 0 && b_i < 8 && b_j >= 0 && b_j < 8) {
+                                if (!ownPieces.contains(String.valueOf(board[b_i][b_j]))) {
+                                    boardNext = copyArray(board);
+                                    boardNext[x][y] = ' ';
+                                    boardNext[b_i][b_j] = bishop;
+                                    //   printBoard(boardNext);
+                                    if (!kingIsInCheck(boardNext)) {
+                                        mate = false;
+                                    }
+                                }
+                                // if current square is not empty, we stop
+                                if (board[b_i][b_j] != ' ') {
+                                    break;
+                                }
+                                b_i += bishopDirection[m][0];
+                                b_j += bishopDirection[m][1];
+                            }
+                        }
+                    }
+                    // queen moves
+                    if (board[x][y] == queen) {
+                        for (int m = 0; m < everyDirection.length; m++) {
+                            int q_i = x + everyDirection[m][0];
+                            int q_j = y + everyDirection[m][1];
+                            while (q_i >= 0 && q_i < 8 && q_j >= 0 && q_j < 8) {
+                                if (!ownPieces.contains(String.valueOf(board[q_i][q_j]))) {
+                                    boardNext = copyArray(board);
+                                    boardNext[x][y] = ' ';
+                                    boardNext[q_i][q_j] = queen;
+                                    //    printBoard(boardNext);
+                                    if (!kingIsInCheck(boardNext)) {
+                                        mate = false;
+                                    }
+                                }
+                                // if current square is not empty, we stop
+                                if (board[q_i][q_j] != ' ') {
+                                    break;
+                                }
+                                q_i += everyDirection[m][0];
+                                q_j += everyDirection[m][1];
+                            }
+                        }
+                    }
+                    // king moves
+                    if (board[x][y] == king) {
+                        for (int m = 0; m < everyDirection.length; m++) {
+                            int k_i = x + everyDirection[m][0];
+                            int k_j = y + everyDirection[m][1];
+                            if (k_i >= 0 && k_i < 8 && k_j >= 0 && k_j < 8) {
+                                if (!ownPieces.contains(String.valueOf(board[k_i][k_j]))) {
+                                    boardNext = copyArray(board);
+                                    boardNext[x][y] = ' ';
+                                    boardNext[k_i][k_j] = king;
+                                    //     printBoard(boardNext);
+                                    if (!kingIsInCheck(boardNext)) {
+                                        mate = false;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             if (mate) {
-                System.out.println("mate!");
+                System.out.print("mate, ");
+                // because we check for winning condition on opposite players turn, these are reversed
+                if (turn == WHITE) {
+                    System.out.println("black won!");
+                }
+                else {
+                    System.out.println("white won!");
+                }
+                quit = true;
             }
             else {
                 System.out.println("!");
             }
-
         }
-
+        // otherwise check for stalemate
+        else {
+            boolean stalemate = true;
+            // go through all pieces and see if there are legal moves to be made.
+            for (int x = 0; x < 8; x++) {
+                for (int y = 0; y < 8; y++) {
+                    // pawn moves
+                    if (board[x][y] == pawn) {
+                        // one move forward by pawn
+                        if (board[x + dir][y] == ' ') {
+                            stalemate = false;
+                        }
+                        // captures left, right and en passant moves
+                        if (y != 0 && opponentPieces.contains(String.valueOf(board[x + dir][y - 1]))) {
+                            stalemate = false;
+                        }
+                        if (y != 7 && opponentPieces.contains(String.valueOf(board[x + dir][y + 1]))) {
+                            stalemate = false;
+                        }
+                        if (y != 0 && x == enPassantRank && enPassant[y - 1]) {
+                            stalemate = false;
+                        }
+                        if (y != 7 && x == enPassantRank && enPassant[y + 1]) {
+                            stalemate = false;
+                        }
+                    }
+                    if (board[x][y] == knight) {
+                        for (int m = 0; m < knightMove.length; m++) {
+                            int n_i = x + knightMove[m][0];
+                            int n_j = y + knightMove[m][1];
+                            if (n_i >= 0 && n_i < 8 && n_j >= 0 && n_j < 8) {
+                                if (!ownPieces.contains(String.valueOf(board[n_i][n_j]))) {
+                                    stalemate = false;
+                                }
+                            }
+                        }
+                    }
+                    if (board[x][y] == rook) {
+                        for (int m = 0; m < rookDirection.length; m++) {
+                            int r_i = x + rookDirection[m][0];
+                            int r_j = y + rookDirection[m][1];
+                            while (r_i >= 0 && r_i < 8 && r_j >= 0 && r_j < 8) {
+                                // check if moving to square (which isn't occupied by a 
+                                // friendly piece) removes check on king
+                                if (!ownPieces.contains(String.valueOf(board[r_i][r_j]))) {
+                                    stalemate = false;
+                                }
+                                // if current square is not empty, we stop
+                                if (board[r_i][r_j] != ' ') {
+                                    break;
+                                }
+                                r_i += rookDirection[m][0];
+                                r_j += rookDirection[m][1];
+                            }
+                        }
+                    }
+                    // bishop moves
+                    if (board[x][y] == bishop) {
+                        for (int m = 0; m < bishopDirection.length; m++) {
+                            int b_i = x + bishopDirection[m][0];
+                            int b_j = y + bishopDirection[m][1];
+                            while (b_i >= 0 && b_i < 8 && b_j >= 0 && b_j < 8) {
+                                if (!ownPieces.contains(String.valueOf(board[b_i][b_j]))) {
+                                    stalemate = false;
+                                }
+                                // if current square is not empty, we stop
+                                if (board[b_i][b_j] != ' ') {
+                                    break;
+                                }
+                                b_i += bishopDirection[m][0];
+                                b_j += bishopDirection[m][1];
+                            }
+                        }
+                    }
+                    // queen moves
+                    if (board[x][y] == queen) {
+                        for (int m = 0; m < everyDirection.length; m++) {
+                            int q_i = x + everyDirection[m][0];
+                            int q_j = y + everyDirection[m][1];
+                            while (q_i >= 0 && q_i < 8 && q_j >= 0 && q_j < 8) {
+                                if (!ownPieces.contains(String.valueOf(board[q_i][q_j]))) {
+                                    stalemate = false;
+                                }
+                                // if current square is not empty, we stop
+                                if (board[q_i][q_j] != ' ') {
+                                    break;
+                                }
+                                q_i += everyDirection[m][0];
+                                q_j += everyDirection[m][1];
+                            }
+                        }
+                    }
+                    // king moves
+                    if (board[x][y] == king) {
+                        for (int m = 0; m < everyDirection.length; m++) {
+                            int k_i = x + everyDirection[m][0];
+                            int k_j = y + everyDirection[m][1];
+                            if (k_i >= 0 && k_i < 8 && k_j >= 0 && k_j < 8) {
+                                if (!ownPieces.contains(String.valueOf(board[k_i][k_j]))) {
+                                    stalemate = false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (stalemate) {
+                System.out.println("Stalemate.");
+                quit = true;
+            }
+        }
     }
     // returns a copy of a 2D-char array given in as argument
 
