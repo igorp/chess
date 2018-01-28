@@ -20,4 +20,4 @@ This is a command line implementation of chess, playable by two human players.
 
 Moves are entered by first specifying the piece ('p' for pawn, 'n' for knight, 'b' for bishop, 'q' for queen and 'k' for king), then the square you wish to move the piece to. For example 'pe4' moves the pawn to e4. If there are more than one of the same piece that can move to one particular square, you can specify the piece by giving its rank or file as the second character. For instance, 'r4a1' means we wish to move the rook that is on the fourth rank to a1.
 
-The next step is to add a chess engine which uses alpha-beta pruning, so that playing alone is more enjoyable.
+The next step is to add a chess engine, so that playing alone is more enjoyable.
